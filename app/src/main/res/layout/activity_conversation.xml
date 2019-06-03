@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="conversationViewModel"
+            type="com.hwx.rx_chat_client.viewModel.conversation.ConversationViewModel" />
+
+    </data>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:context="com.hwx.rx_chat_client.view.ConversationActivity">
+
+        <ImageButton
+            android:id="@+id/btnSend"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:onClick="@{(v) -> conversationViewModel.onBtnSend(v)}"
+            android:background="#00000000"
+            android:padding="10dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_send" />
+
+        <View
+            android:id="@+id/lineBottom2"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/grey_500"
+            android:layout_above="@id/btnSend"/>
+
+
+        <ImageButton
+            android:id="@+id/btnCloseEditMessage"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:onClick="@{(v) -> conversationViewModel.onBtnCloseEdit(v)}"
+            android:background="#00000000"
+            android:padding="10dp"
+            android:layout_marginBottom="45dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_btn_close"
+            app:visibility="@{conversationViewModel.lvEditMessageVisibility}"
+
+            android:layout_above="@id/lineBottom2"/>
+
+
+
+        <View
+            android:id="@+id/lineBottom1"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/grey_500"
+            app:visibility="@{conversationViewModel.lvEditMessageVisibility}"
+            android:layout_above="@id/btnCloseEditMessage"/>
+
+
+
+        <android.support.v4.widget.SwipeRefreshLayout
+            android:id="@+id/swiperefresh_items"
+            app:refreshing="@{conversationViewModel.isMessagesLoading}"
+            app:onRefreshListener="@{() -> conversationViewModel.onRefreshMessages()}"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@id/lineBottom1">
+
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/list_messages"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/light_gray"
+                android:clipToPadding="false"
+                android:scrollbars="vertical"
+                app:layout_behavior="android.support.design.widget.AppBarLayout$ScrollingViewBehavior"
+                app:visibility="@{conversationViewModel.isMessagesVisible}"
+                tools:listitem="@layout/conversation_message"
+                />
+
+        </android.support.v4.widget.SwipeRefreshLayout>
+
+        <EditText
+            android:id="@+id/editWriteMessage"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_toStartOf="@id/btnSend"
+            android:background="@drawable/edittext_boder"
+            android:drawablePadding="20dp"
+            android:inputType="textLongMessage"
+            android:maxLines="1"
+            android:paddingLeft="7dp"
+            android:paddingRight="7dp"
+            android:textColorHint="#aeafaf"
+            android:textSize="15sp"
+            android:text="@={conversationViewModel.lvSendPanelText}"
+            />
+
+        <TextView
+            android:id="@+id/tvEditMessage"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_toStartOf="@id/btnCloseEditMessage"
+            android:background="@drawable/edittext_boder"
+            app:visibility="@{conversationViewModel.lvEditMessageVisibility}"
+            android:paddingLeft="7dp"
+            android:paddingRight="7dp"
+            android:textColorHint="#aeafaf"
+            android:textSize="15sp"
+            android:layout_marginBottom="46dp"
+            android:text="@={conversationViewModel.lvEditMessageOriginalText}"
+
+            />
+
+        <!--<EditText-->
+            <!--android:id="@+id/editText"-->
+            <!--android:layout_width="300dp"-->
+            <!--android:layout_height="50dp"-->
+            <!--android:ems="10"-->
+            <!--android:layout_marginTop="450dp"-->
+            <!--android:text="@={conversationViewModel.lvSendPanelText}"-->
+             <!--/>-->
+
+        <!--<Button-->
+            <!--android:id="@+id/btnLogin"-->
+            <!--android:layout_width="100dp"-->
+            <!--android:layout_height="50dp"-->
+            <!--android:text="SEND"-->
+            <!--android:onClick="@{(v) -> conversationViewModel.onBtnSend(v)}"-->
+            <!--android:textSize="18sp"-->
+            <!--android:layout_marginTop="450dp"-->
+            <!--android:layout_marginLeft="300dp"-->
+            <!--/>-->
+
+    </RelativeLayout>
+
+
+
+</layout>

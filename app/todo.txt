@@ -1,0 +1,4 @@
+1. handle server turn off
+2. cache server data
+3. reactive recycle view
+4. reactive all
