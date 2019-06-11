@@ -20,6 +20,9 @@ public class Configuration {
     public static final String URL_DIALOGS_LIST = HTTPS_SERVER_URL + "api/dialogs";
     public static final String URL_MESSAGES_LIST = HTTPS_SERVER_URL + "api/messages";
     public static final String URL_SIGNUP_USER = HTTPS_SERVER_URL + "api/signup";
+    public static final String URL_UPLOAD_PROFILE_PIC = HTTPS_SERVER_URL + "api/profile/upload_avatar";
+    public static final String URL_UPLOAD_PROFILE_BIO = HTTPS_SERVER_URL + "api/profile/update_bio";
+
 
     public static final Integer MONGO_TIMEZONE_CORRECTION_HRS = 3;
 

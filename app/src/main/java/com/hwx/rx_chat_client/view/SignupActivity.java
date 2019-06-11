@@ -43,6 +43,7 @@ public class SignupActivity extends AppCompatActivity {
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(e->{
+                        finish();
                         startActivity(LoginActivity.getIntent(SignupActivity.this));
                     })
         );

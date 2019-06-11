@@ -54,6 +54,7 @@ public class LoginActivity extends AppCompatActivity {
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(e->{
+                            finish();
                             startActivity(SignupActivity.getIntent(LoginActivity.this));
                         })
         );
@@ -74,9 +75,15 @@ public class LoginActivity extends AppCompatActivity {
                 SharedPreferences pref = getApplicationContext().getSharedPreferences("localPref", 0); // 0 - for private mode
                 SharedPreferences.Editor editor = pref.edit();
                 editor.putString("user_id", loginResponse.getUserId());
-                editor.putString("name", loginResponse.getName());
+                editor.putString("username", loginResponse.getUsername());
                 editor.putString("token", loginResponse.getToken());
                 editor.putBoolean("logged_in", true);
+
+                //user profile data
+                editor.putString("profileAvatarUrl", Configuration.HTTPS_SERVER_URL + loginResponse.getAvatarUrl());
+                editor.putString("profileFirstName", loginResponse.getFirstName());
+                editor.putString("profileLastName", loginResponse.getLastName());
+                editor.putString("profileBio", loginResponse.getBio());
                 editor.apply();
 
                 startActivity(HomeActivity.getIntent(LoginActivity.this));

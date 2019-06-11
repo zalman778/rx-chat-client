@@ -53,7 +53,7 @@ public class ConversationActivity extends AppCompatActivity {
         ((RxChatApplication) getApplication()).getAppComponent().doInjectConversationActivity(this);
         initDataBinding();
 
-        String currentUserName = getApplicationContext().getSharedPreferences("localPref", 0).getString("name", "");
+        String currentUserName = getApplicationContext().getSharedPreferences("localPref", 0).getString("username", "");
 
         conversationElementAdapter = new ConversationElementAdapter(
                 this

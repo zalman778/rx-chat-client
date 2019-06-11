@@ -112,7 +112,7 @@ public class ConversationViewModel extends ViewModel {
     }
 
     private void sendSettingUsername() {
-        String username = sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("name", "");
+        String username = sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("username", "");
         RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.USERNAME, username, null);
         chatSocket.putRxObject(rxObject);
     }
@@ -230,7 +230,7 @@ public class ConversationViewModel extends ViewModel {
             lvSendPanelText.setValue("");
 
             RxMessage rxMessage = new RxMessage(null,
-                    sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("name", "")
+                    sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("username", "")
                     , sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("user_id", "")
                     , msgText
                     , new Date()

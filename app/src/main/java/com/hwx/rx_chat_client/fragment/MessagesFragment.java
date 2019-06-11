@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,34 +53,14 @@ public class MessagesFragment extends Fragment {
         );
         fragmentMessagesBinding.listMessages.setLayoutManager(new LinearLayoutManager(getActivity()));
         fragmentMessagesBinding.listMessages.setAdapter(dialogElementAdapter);
-        //avx test........
-
-//        CompositeDisposable compositeDisposable = new CompositeDisposable();
-//        Disposable disposable = Observable
-//                .just("1", "2", "3")
-//                .delay(7000, TimeUnit.MILLISECONDS)
-//                .subscribeOn(Schedulers.io())
-//                .observeOn(AndroidSchedulers.mainThread())
-//
-//                .subscribe(new Consumer<String>() {
-//                    @Override
-//                    public void accept(String s) throws Exception {
-//                        DialogResponse dr = new DialogResponse();
-//                        dr.setDialogId("xx"+s);
-//                        dr.setDialogName("name_"+s);
-//                        dr.setLastDate(new Date());
-//                        dr.setLastMessage("msg"+s);
-//                        dr.setLastUser("user"+s);
-//                        dialogElementAdapter.addDialog(dr);
-//                    }
-//                });
-//        compositeDisposable.add(disposable);
         return view;
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        Log.w("AVX", "messages:63; got lifecycleOwner="+getViewLifecycleOwner().toString());
 
         //for case when fragment destroyed and subscribtions should no longer come to closed fragment..
         //when recieving list of dialogs..

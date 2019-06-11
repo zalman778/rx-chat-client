@@ -1,6 +1,6 @@
 ##№ Реактивый чат, клиент на android
 
-Используются технологии rsocket, retrofit2, rxjava2, glide, gson, mvvm, data binding, dagger.
+Используются технологии rsocket, retrofit2, rxjava2, glide, gson, mvvm, data binding, dagger2, EasyImage, Nanmu.
 Все сообщения прилетают реактивно с одного клиента на другой.
 
 ## Требование
@@ -19,3 +19,6 @@
 
 Активити диалога:
 ![Alt text](img/rx-chat-screen-01.jpg?raw=true "Активити диалога")
+
+Профиль пользователя:
+![Профиль пользователя](img/rx-chat-screen-03.jpg?raw=true "Профиль пользователя")

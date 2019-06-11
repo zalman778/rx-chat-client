@@ -14,3 +14,4 @@ gradle.properties
 /captures
 .externalNativeBuild
 /gradle.properties
+/.idea/vcs.xml

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.hwx.rx_chat_client.fragment.MessagesFragment">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context="com.hwx.rx_chat_client.fragment.ProfileFragment">
 
     <data>
         <import type="android.view.View" />
@@ -13,42 +13,109 @@
             type="com.hwx.rx_chat_client.viewModel.HomeViewModel" />
     </data>
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/light_gray"
-        >
+        android:layout_gravity="center"
+        android:padding="10dp"
+        android:orientation="vertical">
 
-        <Button
-            android:id="@+id/btnLogout"
-            android:layout_width="100dp"
+        <RelativeLayout
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="32dp"
-            android:layout_marginStart="32dp"
-            android:layout_marginTop="32dp"
-            android:text="logout"
-            android:onClick="@{(v) -> homeViewModel.onProfileLogout(v)}"
-            android:textSize="18sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            android:orientation="horizontal">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/image_people"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_gravity="left"
+                tools:imageUrl="@{homeViewModel.lvProfileAvatarUrl}"
+                android:onClick="@{(v) -> homeViewModel.onProfileAvatarClick(v)}"
+                />
+
+            <EditText
+                android:id="@+id/etFirstName"
+                android:inputType="textLongMessage"
+                android:maxLines="1"
+                android:text="@={homeViewModel.lvProfileFirstname}"
+                android:hint="First Name"
+                android:layout_width="250dp"
+                android:layout_marginLeft="110dp"
+                android:layout_height="wrap_content"
+                android:ems="10" />
+
+            <EditText
+                android:id="@+id/etLastName"
+                android:text="@={homeViewModel.lvProfileLastname}"
+                android:hint="Last Name"
+                android:layout_width="250dp"
+                android:layout_marginLeft="110dp"
+                android:layout_marginTop="50dp"
+                android:layout_height="wrap_content"
+                android:ems="10" />
+
+        </RelativeLayout>
+
+        <EditText
+            android:id="@+id/etUsername"
+            android:hint="Username"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:text="@={homeViewModel.lvProfileUsername}"
+            android:ems="10" />
+
+        <EditText
+            android:inputType="textMultiLine"
+            android:hint="Bio"
+            android:lines="4"
+            android:minLines="6"
+            android:gravity="top|left"
+            android:maxLines="4"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:scrollbars="vertical"
+            android:text="@={homeViewModel.lvProfileBio}"
+            />
+
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+
+            >
+
+            <Button
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:text="Log Out"
+                android:onClick="@{(v) -> homeViewModel.onProfileLogOut(v)}"
+                />
+
+            <Button
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="210dp"
+                android:text="Save"
+                android:onClick="@{(v) -> homeViewModel.onProfileSaveChanges(v)}"
+                />
+
+        </RelativeLayout>
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:visibility="@{homeViewModel.lvProfileProgressVisibility}"
             />
 
         <TextView
-            android:id="@+id/lbUsername"
-            android:layout_width="32dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="16dp"
-            android:lineSpacingExtra="8sp"
-            android:text="@={homeViewModel.profileUsername}"
-            android:textAlignment="center"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btnLogout" />
+            android:text="@={homeViewModel.lvProfileRequestResult}"
+            />
 
-    </RelativeLayout>
+    </LinearLayout>
 
 </layout>

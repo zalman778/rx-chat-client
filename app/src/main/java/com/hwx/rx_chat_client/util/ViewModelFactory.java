@@ -11,6 +11,7 @@ import com.hwx.rx_chat_client.viewModel.SignupViewModel;
 import com.hwx.rx_chat_client.viewModel.conversation.ConversationViewModel;
 import com.hwx.rx_chat_client.viewModel.HomeViewModel;
 import com.hwx.rx_chat_client.viewModel.LoginViewModel;
+import com.squareup.picasso.Picasso;
 
 import javax.inject.Inject;
 
@@ -21,6 +22,7 @@ public class ViewModelFactory implements ViewModelProvider.Factory {
     private SharedPreferencesProvider sharedPreferencesProvider;
     private ChatSocket chatSocket;
     private SocketServer socketServer;
+    private Picasso picasso;
 
 
     @Inject
@@ -30,6 +32,7 @@ public class ViewModelFactory implements ViewModelProvider.Factory {
               , SharedPreferencesProvider sharedPreferencesProvider
               , ChatSocket chatSocket
               , SocketServer socketServer
+              , Picasso picasso
 
     ) {
         this.chatRepository = chatRepository;
@@ -37,6 +40,7 @@ public class ViewModelFactory implements ViewModelProvider.Factory {
         this.sharedPreferencesProvider = sharedPreferencesProvider;
         this.chatSocket = chatSocket;
         this.socketServer = socketServer;
+        this.picasso = picasso;
     }
 
 
@@ -47,7 +51,7 @@ public class ViewModelFactory implements ViewModelProvider.Factory {
             return (T) new LoginViewModel(chatRepository);
         }
         if (modelClass.isAssignableFrom(HomeViewModel.class)) {
-            return (T) new HomeViewModel(chatRepository, resourceProvider, sharedPreferencesProvider);
+            return (T) new HomeViewModel(chatRepository, resourceProvider, sharedPreferencesProvider, picasso);
         }
         if (modelClass.isAssignableFrom(ConversationViewModel.class)) {
             return (T) new ConversationViewModel(chatRepository, resourceProvider, sharedPreferencesProvider, chatSocket);

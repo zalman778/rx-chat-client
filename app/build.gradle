@@ -4,7 +4,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.hwx.rx_chat_client"
-        minSdkVersion 26
+        minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -64,7 +64,10 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.0'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.4'
 
-    implementation 'com.github.bumptech.glide:glide:4.7.1'
+    //images
+    implementation 'com.squareup.picasso:picasso:2.71828'
+//    implementation 'com.squareup.picasso:picasso:2.5.2'
+//    implementation 'com.github.bumptech.glide:glide:4.7.1'
 
     //liveData
     implementation "android.arch.lifecycle:viewmodel:1.1.1"
@@ -97,6 +100,9 @@ dependencies {
 
     //retrofit logging
     implementation 'com.squareup.okhttp3:logging-interceptor:3.12.1'
+
+    //image upload
+    implementation 'com.github.maayyaannkk:ImagePicker:1.0.2'
 
 
     testImplementation 'junit:junit:4.12'

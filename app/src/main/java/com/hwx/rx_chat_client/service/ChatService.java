@@ -1,6 +1,7 @@
 package com.hwx.rx_chat_client.service;
 
 import com.hwx.rx_chat.common.entity.rx.RxMessage;
+import com.hwx.rx_chat.common.request.ProfileInfoUpdateRequest;
 import com.hwx.rx_chat.common.request.SignupRequest;
 import com.hwx.rx_chat.common.response.DefaultResponse;
 import com.hwx.rx_chat.common.response.DialogResponse;
@@ -11,13 +12,15 @@ import java.util.List;
 import java.util.Map;
 
 import io.reactivex.Observable;
+import okhttp3.MultipartBody;
 import retrofit2.Response;
 import retrofit2.http.Body;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.HeaderMap;
-import retrofit2.http.Headers;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.Part;
 
 public interface ChatService {
 
@@ -49,13 +52,23 @@ public interface ChatService {
             , @Field("dialogId") String dialogId
     );
 
-//    @FormUrlEncoded
-//    @Headers("Content-Type: application/json")
+
     @POST(Configuration.URL_SIGNUP_USER)
     Observable<DefaultResponse> signUpUser(
             @Body SignupRequest signupRequest
     );
 
 
+    @POST(Configuration.URL_UPLOAD_PROFILE_PIC)
+    @Multipart
+    Observable<DefaultResponse> updateProfilePic(
+             @HeaderMap Map<String, String> headers
+           , @Part MultipartBody.Part img
+    );
 
+    @POST(Configuration.URL_UPLOAD_PROFILE_BIO)
+    Observable<DefaultResponse> updateProfileBio(
+              @HeaderMap Map<String, String> headers
+            , @Body ProfileInfoUpdateRequest profileInfoUpdateRequest
+    );
 }

@@ -19,6 +19,8 @@ import com.hwx.rx_chat_client.service.ChatService;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 import com.hwx.rx_chat_client.util.ViewModelFactory;
+import com.squareup.picasso.OkHttp3Downloader;
+import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,9 +46,12 @@ import dagger.Module;
 import dagger.Provides;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import okhttp3.Authenticator;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.Route;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
@@ -99,7 +104,19 @@ public class UtilsModule {
 
     @Provides
     @Singleton
-    OkHttpClient getRequestHeader() {
+    Picasso getPicasso(Context context, OkHttpClient okHttpClient) {
+
+        Log.i("AVX", "initializing picasso");
+        Picasso picasso = new Picasso.Builder(context)
+                .downloader(new OkHttp3Downloader(okHttpClient))
+                .build();
+        Picasso.setSingletonInstance(picasso);
+        return picasso;
+    }
+
+    @Provides
+    @Singleton
+    OkHttpClient getOkHttpClient(SharedPreferencesProvider sharedPreferencesProvider) {
 
 
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
@@ -131,6 +148,18 @@ public class UtilsModule {
                 .connectTimeout(100, TimeUnit.SECONDS)
                 .writeTimeout(100, TimeUnit.SECONDS)
                 .readTimeout(300, TimeUnit.SECONDS);
+
+        //if header map exists here:
+        String token = sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("token", "");
+        if (token != null && !token.isEmpty())
+            httpClient.addInterceptor(chain -> {
+                Request newRequest = chain.request()
+                        .newBuilder()
+                        .addHeader("Authorization", token)
+                        .build();
+                return chain.proceed(newRequest);
+            });
+
 
         return httpClient.build();
     }
@@ -241,8 +270,9 @@ public class UtilsModule {
             , SharedPreferencesProvider sharedPreferencesProvider
             , ChatSocket chatSocket
             , SocketServer socketServer
+            , Picasso picasso
     ) {
-        return new ViewModelFactory(repository, resourceProvider, sharedPreferencesProvider, chatSocket, socketServer);
+        return new ViewModelFactory(repository, resourceProvider, sharedPreferencesProvider, chatSocket, socketServer, picasso);
     }
 
 }
