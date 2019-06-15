@@ -17,6 +17,7 @@ import com.hwx.rx_chat_client.databinding.ConvItemMessageOtherBinding;
 import com.hwx.rx_chat_client.databinding.ConvItemMessageSelfBinding;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.viewModel.conversation.MessageViewModel;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ public class ConversationElementAdapter
     public static final int VIEW_TYPE_SELF_MESSAGE = 0;
     public static final int VIEW_TYPE_OTHER_MESSAGE = 1;
     private ResourceProvider resourceProvider;
+    private Picasso picasso;
 
 
     private List<RxMessage> messagesList = new ArrayList<>();
@@ -44,18 +46,24 @@ public class ConversationElementAdapter
 
     private PublishSubject<String> psMessageDeleteRequest = PublishSubject.create();
     private PublishSubject<RxMessage> psMessageEditRequest = PublishSubject.create();
+    private PublishSubject<String> psUserImageClicked;
 
     private ActivityConversationBinding activityConversationBinding;
 
     public ConversationElementAdapter(
-            LifecycleOwner lifecycleOwner
+              LifecycleOwner lifecycleOwner
             , String currentUserName
             , ResourceProvider resourceProvider
-            , ActivityConversationBinding activityConversationBinding) {
+            , ActivityConversationBinding activityConversationBinding
+            , Picasso picasso
+            , PublishSubject<String> psUserImageClicked
+    ) {
         this.lifecycleOwner = lifecycleOwner;
         this.currentUsername = currentUserName;
         this.resourceProvider = resourceProvider;
         this.activityConversationBinding = activityConversationBinding;
+        this.picasso = picasso;
+        this.psUserImageClicked = psUserImageClicked;
     }
 
     public PublishSubject<RxMessage> getPsMessageEditRequest() {
@@ -119,8 +127,7 @@ public class ConversationElementAdapter
     public void onBindViewHolder(@NonNull ConversationElementViewHolder conversationElementViewHolder, int i) {
         String messageId = messagesList.get(i).getId();
         if (viewModelsMap.get(messageId) == null) {
-            MessageViewModel messageViewModel = new MessageViewModel(resourceProvider);
-            //TODO!!
+            MessageViewModel messageViewModel = new MessageViewModel(resourceProvider, picasso, psUserImageClicked);
             viewModelsMap.put(messageId, messageViewModel);
         }
         conversationElementViewHolder.bindDialogElement(messagesList.get(i), viewModelsMap.get(messageId));
@@ -137,7 +144,7 @@ public class ConversationElementAdapter
     }
 
     @Override
-    public void onItemDismiss(int position) {
+    public void onItemSwipeLeft(int position) {
         psMessageDeleteRequest.onNext(getMessagesList().get(position).getId());
     }
 
@@ -172,8 +179,13 @@ public class ConversationElementAdapter
     }
 
     @Override
-    public void onItemEdit(int adapterPosition) {
+    public void onItemSwapRight(int adapterPosition) {
         psMessageEditRequest.onNext(getMessagesList().get(adapterPosition));
+    }
+
+    @Override
+    public boolean checkHasRightToSwipe(int adapterPosition) {
+        return currentUsername.equals(getMessagesList().get(adapterPosition).getUserFromName());
     }
 
     public static class ConversationElementViewHolder extends RecyclerView.ViewHolder /*implements View.OnCreateContextMenuListener */{

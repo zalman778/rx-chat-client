@@ -1,0 +1,67 @@
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <import type="android.view.View" />
+
+
+        <variable
+            name="friendElementViewModel"
+            type="com.hwx.rx_chat_client.viewModel.FriendElementViewModel"/>
+    </data>
+
+    <android.support.v7.widget.CardView
+        app:cardElevation="5dp"
+        android:layout_margin="5dp"
+        android:id="@+id/dialog_simple_object"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:foreground="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:onClick="@{friendElementViewModel::onUserSelected}"
+        android:padding="1dp"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+
+            android:layout_gravity="center"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:orientation="vertical">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/image_people"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="left"
+                tools:imageUrl="@{friendElementViewModel.lvImageUrl}"
+
+                />
+
+
+
+            <TextView
+                android:id="@+id/label_dialog_caption"
+                android:layout_width="216dp"
+
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:layout_marginLeft="70dp"
+                android:layout_marginTop="-60dp"
+                android:text="@={friendElementViewModel.lvUsername}"
+                android:textColor="@color/colorAccent"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                tools:ignore="RtlCompat"
+                tools:text="Alexey Petrov" />
+
+
+
+        </LinearLayout>
+
+    </android.support.v7.widget.CardView>
+
+</layout>

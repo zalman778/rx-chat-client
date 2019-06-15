@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.hwx.rx_chat_client.fragment.FriendsFragment">
+
+    <data>
+        <import type="android.view.View" />
+
+        <variable
+            name="homeViewModel"
+            type="com.hwx.rx_chat_client.viewModel.HomeViewModel" />
+    </data>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/light_gray"
+        >
+
+        <android.support.v4.widget.SwipeRefreshLayout
+            android:id="@+id/swiperefresh_items"
+            app:refreshing="@{homeViewModel.isFriendsListLoading}"
+            app:onRefreshListener="@{() -> homeViewModel.onRefreshFriendsList()}"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/list_friends"
+                android:layout_width="match_parent"
+                android:layout_height="653dp"
+                android:background="@color/light_gray"
+                android:clipToPadding="false"
+                android:scrollbars="vertical"
+                app:layout_behavior="android.support.design.widget.AppBarLayout$ScrollingViewBehavior"
+                app:visibility="@{homeViewModel.isFriendsListVisible}"
+                tools:listitem="@layout/activity_friend_element" />
+
+        </android.support.v4.widget.SwipeRefreshLayout>
+
+    </RelativeLayout>
+
+</layout>

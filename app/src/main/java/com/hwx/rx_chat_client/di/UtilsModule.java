@@ -10,12 +10,17 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.rsocket.ChatSocket;
 import com.hwx.rx_chat_client.rsocket.SocketServer;
 import com.hwx.rx_chat_client.service.ChatRepository;
 import com.hwx.rx_chat_client.service.ChatService;
+import com.hwx.rx_chat_client.service.DialogRepository;
+import com.hwx.rx_chat_client.service.DialogService;
+import com.hwx.rx_chat_client.service.FriendRepository;
+import com.hwx.rx_chat_client.service.FriendService;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 import com.hwx.rx_chat_client.util.ViewModelFactory;
@@ -264,15 +269,37 @@ public class UtilsModule {
 
     @Provides
     @Singleton
+    FriendService getFriendService(Retrofit retrofit) { return retrofit.create(FriendService.class); }
+
+    @Provides
+    @Singleton
+    FriendRepository getFriendRepository(FriendService friendService) {
+        return new FriendRepository(friendService);
+    }
+
+    @Provides
+    @Singleton
+    DialogService getDialogsService(Retrofit retrofit) { return retrofit.create(DialogService.class); }
+
+    @Provides
+    @Singleton
+    DialogRepository getDialogsRepository(DialogService dialogService) {
+        return new DialogRepository(dialogService);
+    }
+
+    @Provides
+    @Singleton
     ViewModelProvider.Factory getViewModelFactory(
               ChatRepository repository
+            , FriendRepository friendRepository
+            , DialogRepository dialogRepository
             , ResourceProvider resourceProvider
             , SharedPreferencesProvider sharedPreferencesProvider
             , ChatSocket chatSocket
             , SocketServer socketServer
             , Picasso picasso
     ) {
-        return new ViewModelFactory(repository, resourceProvider, sharedPreferencesProvider, chatSocket, socketServer, picasso);
+        return new ViewModelFactory(repository, friendRepository, dialogRepository, resourceProvider, sharedPreferencesProvider, chatSocket, socketServer, picasso);
     }
 
 }

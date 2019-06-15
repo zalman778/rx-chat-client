@@ -12,11 +12,13 @@ import com.hwx.rx_chat.common.object.rx.RxObject;
 import com.hwx.rx_chat.common.object.rx.types.EventType;
 import com.hwx.rx_chat.common.object.rx.types.ObjectType;
 import com.hwx.rx_chat.common.object.rx.types.SettingType;
+import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.rsocket.ChatSocket;
 import com.hwx.rx_chat_client.service.ChatRepository;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
+import com.squareup.picasso.Picasso;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -42,6 +44,9 @@ public class ConversationViewModel extends ViewModel {
     private ResourceProvider resourceProvider;
     private SharedPreferencesProvider sharedPreferencesProvider;
     private ChatSocket chatSocket;
+
+    private Picasso picasso;
+
     private CompositeDisposable disposables = new CompositeDisposable();
 
 
@@ -57,6 +62,8 @@ public class ConversationViewModel extends ViewModel {
     private PublishSubject<RxObject> psRxMessage = PublishSubject.create();
     private PublishSubject<List<RxMessage>> psRxMessagesList = PublishSubject.create();
     private PublishSubject<String> psPerformRollbackMessageSwipe = PublishSubject.create();
+    private PublishSubject<String> psUserImageClicked = PublishSubject.create();
+    private PublishSubject<UserDetailsResponse> psProfileSelectedLoaded = PublishSubject.create();
 
 
     private String idDialog;
@@ -68,16 +75,17 @@ public class ConversationViewModel extends ViewModel {
 
 
     public ConversationViewModel(
-              ChatRepository chatRepository
+            ChatRepository chatRepository
             , ResourceProvider resourceProvider
             , SharedPreferencesProvider sharedPreferencesProvider
-            , ChatSocket chatSocket
-                                 ) {
+            , ChatSocket chatSocket,
+            Picasso picasso) {
 
         this.chatRepository = chatRepository;
         this.resourceProvider = resourceProvider;
         this.sharedPreferencesProvider = sharedPreferencesProvider;
         this.chatSocket = chatSocket;
+        this.picasso = picasso;
 
         this.isMessagesVisible.setValue(View.VISIBLE);
         this.isMessagesLoading.setValue(false);
@@ -86,23 +94,48 @@ public class ConversationViewModel extends ViewModel {
         SharedPreferences pref = sharedPreferencesProvider.getSharedPreferences("localPref", 0);
         headersMap.put("Authorization", pref.getString("token", ""));
 
+        subscribePublishers();
 
+    }
+
+    private void subscribePublishers() {
         //получаем реактивно сообщения
         disposables.add(
-            chatSocket
-                .getPsRxMessage()
+                chatSocket
+                        .getPsRxMessage()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(rxObject -> {
+                            //Fixing time from Mongo if its message:
+                            if (rxObject.getMessage() != null) {
+                                Calendar cal = Calendar.getInstance();
+                                cal.setTime(rxObject.getMessage().getDateSent());
+                                cal.add(Calendar.HOUR_OF_DAY, Configuration.MONGO_TIMEZONE_CORRECTION_HRS);
+                                rxObject.getMessage().setDateSent(cal.getTime());
+                            }
+                            psRxMessage.onNext(rxObject);
+                        }, e->Log.e("AVX", "err on rx", e))
+        );
+
+        disposables.add(
+            psUserImageClicked
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(rxObject -> {
-                    //Fixing time from Mongo if its message:
-                    if (rxObject.getMessage() != null) {
-                        Calendar cal = Calendar.getInstance();
-                        cal.setTime(rxObject.getMessage().getDateSent());
-                        cal.add(Calendar.HOUR_OF_DAY, Configuration.MONGO_TIMEZONE_CORRECTION_HRS);
-                        rxObject.getMessage().setDateSent(cal.getTime());
-                    }
-                    psRxMessage.onNext(rxObject);
-                }, e->Log.e("AVX", "err on rx", e))
+                    .subscribe(this::sendProfileInfoRequest
+                            , err->Log.e("AVX", "err", err))
+        );
+    }
+
+    private void sendProfileInfoRequest(String profileId) {
+        disposables.add(
+                chatRepository
+                        .getProfileInfo(Configuration.URL_GET_PROFILE_INFO+"/"+profileId, headersMap)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                profileInfo -> psProfileSelectedLoaded.onNext(profileInfo)
+                                ,err->Log.e("AVX", "err", err)
+                        )
         );
     }
 
@@ -123,6 +156,10 @@ public class ConversationViewModel extends ViewModel {
         chatSocket.putRxObject(rxObject);
     }
 
+    public Picasso getPicasso() {
+        return picasso;
+    }
+
     public HashSet<String> getUniqueMessagesIdSet() {
         return uniqueMessagesIdSet;
     }
@@ -133,6 +170,14 @@ public class ConversationViewModel extends ViewModel {
 
     public PublishSubject<String> getPsPerformRollbackMessageSwipe() {
         return psPerformRollbackMessageSwipe;
+    }
+
+    public PublishSubject<String> getPsUserImageClicked() {
+        return psUserImageClicked;
+    }
+
+    public PublishSubject<UserDetailsResponse> getPsProfileSelectedLoaded() {
+        return psProfileSelectedLoaded;
     }
 
     public MutableLiveData<String> getLvEditMessageOriginalText() {
@@ -225,21 +270,7 @@ public class ConversationViewModel extends ViewModel {
     }
 
     public void onBtnSend(View view) {
-        if (!isEditingMessage) {
-            String msgText = lvSendPanelText.getValue();
-            lvSendPanelText.setValue("");
-
-            RxMessage rxMessage = new RxMessage(null,
-                    sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("username", "")
-                    , sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("user_id", "")
-                    , msgText
-                    , new Date()
-                    , idDialog
-            );
-
-            RxObject rxObject = new RxObject(ObjectType.EVENT, EventType.MESSAGE_NEW_FROM_CLIENT, null, rxMessage);
-            chatSocket.putRxObject(rxObject);
-        } else {
+        if (isEditingMessage) {
 
             editatbleMessage.setValue(lvSendPanelText.getValue());
 
@@ -252,6 +283,22 @@ public class ConversationViewModel extends ViewModel {
             lvEditMessageOriginalText.setValue("");
             lvSendPanelText.setValue("");
             isEditingMessage = false;
+        } else {
+            String msgText = lvSendPanelText.getValue();
+            lvSendPanelText.setValue("");
+
+            RxMessage rxMessage = new RxMessage(null,
+                    sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("username", "")
+                    , sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("user_id", "")
+                    , msgText
+                    , new Date()
+                    , idDialog
+            );
+
+            Log.w("AVX", "sending rx message:"+rxMessage.getValue());
+            RxObject rxObject = new RxObject(ObjectType.EVENT, EventType.MESSAGE_NEW_FROM_CLIENT, null, rxMessage);
+            chatSocket.putRxObject(rxObject);
+
         }
     }
 
@@ -262,4 +309,6 @@ public class ConversationViewModel extends ViewModel {
         editatbleMessage = rxMsg;
         this.isEditingMessage = true;
     }
+
+
 }

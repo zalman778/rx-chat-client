@@ -5,7 +5,9 @@ import com.hwx.rx_chat.common.request.ProfileInfoUpdateRequest;
 import com.hwx.rx_chat.common.request.SignupRequest;
 import com.hwx.rx_chat.common.response.DefaultResponse;
 import com.hwx.rx_chat.common.response.DialogResponse;
+import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat.common.response.LoginResponse;
+import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
 
 import java.util.List;
@@ -17,10 +19,12 @@ import retrofit2.Response;
 import retrofit2.http.Body;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
+import retrofit2.http.GET;
 import retrofit2.http.HeaderMap;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.Part;
+import retrofit2.http.Url;
 
 public interface ChatService {
 
@@ -38,9 +42,36 @@ public interface ChatService {
             , @Field("passwordHash") String password
     );
 
+    @POST(Configuration.URL_SIGNUP_USER)
+    Observable<DefaultResponse> signUpUser(
+            @Body SignupRequest signupRequest
+    );
+
+    @FormUrlEncoded
+    @POST(Configuration.URL_USERS_SEARCH)
+    Observable<List<FriendResponse>> searchUsers(
+             @HeaderMap Map<String, String> headers
+            , @Field("username") String username
+    );
+
+    @GET
+    Observable<UserDetailsResponse> getProfileInfo(
+              @Url String url
+            , @HeaderMap Map<String, String> headers
+    );
+
+
     @FormUrlEncoded
     @POST(Configuration.URL_DIALOGS_LIST)
     Observable<List<DialogResponse>> getDialogList(
+              @HeaderMap Map<String, String> headers
+            , @Field("userId") String userId
+    );
+
+
+    @FormUrlEncoded
+    @POST(Configuration.URL_FRIENDS_LIST)
+    Observable<List<FriendResponse>> getFriendsList(
               @HeaderMap Map<String, String> headers
             , @Field("userId") String userId
     );
@@ -51,13 +82,6 @@ public interface ChatService {
               @HeaderMap Map<String, String> headers
             , @Field("dialogId") String dialogId
     );
-
-
-    @POST(Configuration.URL_SIGNUP_USER)
-    Observable<DefaultResponse> signUpUser(
-            @Body SignupRequest signupRequest
-    );
-
 
     @POST(Configuration.URL_UPLOAD_PROFILE_PIC)
     @Multipart

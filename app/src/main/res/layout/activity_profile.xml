@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="profileViewModel"
+            type="com.hwx.rx_chat_client.viewModel.friend.ProfileViewModel" />
+
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:padding="10dp"
+        android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/image_people"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="left"
+            tools:imageUrl="@{profileViewModel.lvProfileAvatarUrl}"
+            />
+
+        <TextView
+            android:id="@+id/etFirstNameLabel"
+            android:maxLines="1"
+            android:text="First name:"
+            android:layout_width="250dp"
+            android:layout_marginLeft="110dp"
+            android:layout_height="wrap_content"
+            android:ems="10" />
+
+        <TextView
+            android:id="@+id/etFirstName"
+            android:maxLines="1"
+            android:text="@={profileViewModel.lvProfileFirstname}"
+            android:layout_width="250dp"
+            android:layout_marginLeft="110dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="25dp"
+            android:textStyle="bold"
+            android:ems="10" />
+
+        <TextView
+            android:id="@+id/etLastNameLabel"
+            android:text="Last name:"
+            android:layout_width="250dp"
+            android:layout_marginLeft="110dp"
+            android:layout_marginTop="50dp"
+            android:layout_height="wrap_content"
+            android:ems="10" />
+
+        <TextView
+            android:id="@+id/etLastName"
+            android:text="@={profileViewModel.lvProfileLastname}"
+            android:layout_width="250dp"
+            android:layout_marginLeft="110dp"
+            android:layout_marginTop="75dp"
+            android:textStyle="bold"
+            android:layout_height="wrap_content"
+            android:ems="10" />
+
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/etUsernameLabel"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:text="Username:"
+        android:ems="10" />
+
+    <TextView
+        android:id="@+id/etUsername"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_marginTop="5dp"
+        android:textStyle="bold"
+        android:text="@={profileViewModel.lvProfileUsername}"
+        android:ems="10" />
+
+        <TextView
+            android:id="@+id/etBioLabel"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:text="Bio:"
+            android:ems="10" />
+
+        <TextView
+            android:lines="4"
+            android:minLines="6"
+            android:gravity="top|left"
+            android:maxLines="4"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:scrollbars="vertical"
+            android:textStyle="bold"
+            android:text="@={profileViewModel.lvProfileBio}"
+            />
+
+
+
+        <Button
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Open chat"
+            android:onClick="@{(v) -> profileViewModel.onClickOpenChat()}"
+            />
+
+        <Button
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:visibility="@{profileViewModel.lvVisibilitySendFriendRequest}"
+            android:text="send friend request"
+            android:onClick="@{(v) -> profileViewModel.onClickSendFriendRequest()}"
+            />
+
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:visibility="@{profileViewModel.lvVisibilityProfileProgress}"
+            />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{profileViewModel.lvProfileRequestResult}"
+            />
+
+    </LinearLayout>
+</layout>

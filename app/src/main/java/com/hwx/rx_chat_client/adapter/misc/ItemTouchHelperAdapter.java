@@ -43,20 +43,13 @@ public interface ItemTouchHelperAdapter {
     boolean onItemMove(int fromPosition, int toPosition);
 
 
-    /**
-     * Called when an item has been dismissed by a swipe.<br/>
-     * <br/>
-     * Implementations should call {@link RecyclerView.Adapter#notifyItemRemoved(int)} after
-     * adjusting the underlying data to reflect this removal.
-     *
-     * @param position The position of the item dismissed
-     *
-     * @see RecyclerView#getAdapterPositionFor(RecyclerView.ViewHolder)
-     * @see RecyclerView.ViewHolder#getAdapterPosition()
-     */
-    void onItemDismiss(int position);
+    //custom methods
+    void onItemSwipeLeft(int position);
 
     void onItemSwipping(int adapterPosition, Boolean direction);
 
-    void onItemEdit(int adapterPosition);
+    void onItemSwapRight(int adapterPosition);
+
+    //метод проверяет наличие прав у текущего юзера для сообщения
+    boolean checkHasRightToSwipe(int adapterPosition);
 }

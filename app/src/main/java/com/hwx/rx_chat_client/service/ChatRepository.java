@@ -5,7 +5,9 @@ import com.hwx.rx_chat.common.request.ProfileInfoUpdateRequest;
 import com.hwx.rx_chat.common.request.SignupRequest;
 import com.hwx.rx_chat.common.response.DefaultResponse;
 import com.hwx.rx_chat.common.response.DialogResponse;
+import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat.common.response.LoginResponse;
+import com.hwx.rx_chat.common.response.UserDetailsResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -30,17 +32,31 @@ public class ChatRepository {
         return chatService.authorizeWithResponse(username, password);
     }
 
+    public Observable<DefaultResponse> signUpUser(SignupRequest signupRequest) {
+        return chatService.signUpUser(signupRequest);
+    }
+
+    public Observable<List<FriendResponse>> searchUsers(Map<String, String> headersMap, String username) {
+        return chatService.searchUsers(headersMap, username);
+    }
+
     public Observable<List<DialogResponse>> getDialogList(Map<String, String> headersMap, String userId) {
         return chatService.getDialogList(headersMap, userId);
+    }
+
+    public Observable<List<FriendResponse>> getFriendList(Map<String, String> headersMap, String userId) {
+        return chatService.getFriendsList(headersMap, userId);
+    }
+
+    public Observable<UserDetailsResponse> getProfileInfo(String url, Map<String, String> headersMap) {
+        return chatService.getProfileInfo(url, headersMap);
     }
 
     public Observable<List<RxMessage>> getMessageList(Map<String, String> headersMap, String dialogId) {
         return chatService.getMessageList(headersMap, dialogId);
     }
 
-    public Observable<DefaultResponse> signUpUser(SignupRequest signupRequest) {
-        return chatService.signUpUser(signupRequest);
-    }
+
 
     public Observable<DefaultResponse> updateProfilePic(Map<String, String> headersMap, MultipartBody.Part img) {
         return chatService.updateProfilePic(headersMap, img);

@@ -56,6 +56,10 @@ public class RxMessage implements Serializable {
     @JsonProperty("date_deleted")
     private Date dateDeleted;
 
+    @SerializedName("image_url")
+    @JsonProperty("image_url")
+    private String imageUrl;
+
     public RxMessage() {
     }
 
@@ -166,6 +170,14 @@ public class RxMessage implements Serializable {
         this.dateDeleted = dateDeleted;
     }
 
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -182,12 +194,13 @@ public class RxMessage implements Serializable {
                 Objects.equals(isEdited, rxMessage.isEdited) &&
                 Objects.equals(dateEdited, rxMessage.dateEdited) &&
                 Objects.equals(isDeleted, rxMessage.isDeleted) &&
-                Objects.equals(dateDeleted, rxMessage.dateDeleted);
+                Objects.equals(dateDeleted, rxMessage.dateDeleted) &&
+                Objects.equals(imageUrl, rxMessage.imageUrl);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, userFromName, userFromId, value, dateSent, dateExp, isExpirable, idDialog, isEdited, dateEdited, isDeleted, dateDeleted);
+        return Objects.hash(id, userFromName, userFromId, value, dateSent, dateExp, isExpirable, idDialog, isEdited, dateEdited, isDeleted, dateDeleted, imageUrl);
     }
 
     @Override
@@ -205,7 +218,7 @@ public class RxMessage implements Serializable {
                 ", dateEdited=" + dateEdited +
                 ", isDeleted=" + isDeleted +
                 ", dateDeleted=" + dateDeleted +
+                ", imageUrl='" + imageUrl + '\'' +
                 '}';
     }
-
 }

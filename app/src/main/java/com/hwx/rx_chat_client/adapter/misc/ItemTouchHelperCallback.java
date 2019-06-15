@@ -21,7 +21,6 @@ import android.support.annotation.NonNull;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 
 /**
  * An implementation of {@link ItemTouchHelper.Callback} that enables basic drag & drop and
@@ -33,7 +32,7 @@ import android.util.Log;
  *
  * @author Paul Burke (ipaulpro)
  */
-public class SimpleItemTouchHelperCallback extends ItemTouchHelper.Callback {
+public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
 
     public static final float ALPHA_FULL = 1.0f;
 
@@ -42,7 +41,7 @@ public class SimpleItemTouchHelperCallback extends ItemTouchHelper.Callback {
     //true = right
     private Boolean direction;
 
-    public SimpleItemTouchHelperCallback(ItemTouchHelperAdapter adapter) {
+    public ItemTouchHelperCallback(ItemTouchHelperAdapter adapter) {
         mAdapter = adapter;
     }
 
@@ -63,11 +62,12 @@ public class SimpleItemTouchHelperCallback extends ItemTouchHelper.Callback {
             final int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT;
             final int swipeFlags = 0;
             return makeMovementFlags(dragFlags, swipeFlags);
-        } else {
+        } else if (mAdapter.checkHasRightToSwipe(viewHolder.getAdapterPosition())) {
             //final int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
             final int swipeFlags = ItemTouchHelper.START | ItemTouchHelper.END;
             return makeMovementFlags(0, swipeFlags);
-        }
+        } else
+            return makeMovementFlags(0, 0);
     }
 
     @Override
@@ -87,10 +87,10 @@ public class SimpleItemTouchHelperCallback extends ItemTouchHelper.Callback {
         if (direction) {
             viewHolder.itemView.setTranslationX(0);
             viewHolder.itemView.setAlpha(1f);
-            mAdapter.onItemEdit(viewHolder.getAdapterPosition());
+            mAdapter.onItemSwapRight(viewHolder.getAdapterPosition());
         }
         else
-            mAdapter.onItemDismiss(viewHolder.getAdapterPosition());
+            mAdapter.onItemSwipeLeft(viewHolder.getAdapterPosition());
     }
 
     @Override

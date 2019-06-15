@@ -73,8 +73,10 @@ public class MessagesFragment extends Fragment {
         homeViewModel.getLvDialogPicked().observe(
                 getViewLifecycleOwner(), o -> {
                     //Log.w("AVX", "got list of messages : "+((ArrayList<MessageResponse>) o).size());
-                    startActivity(ConversationActivity.getIntent(getActivity(), (DialogListAndIdDialogHolder) o));
+                    startActivity(ConversationActivity.getIntent(getActivity(), ((DialogListAndIdDialogHolder) o).getIdDialog()));
                 }
         );
+
+        homeViewModel.onRefreshDialogs();
     }
 }

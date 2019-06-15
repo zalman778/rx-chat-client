@@ -12,12 +12,16 @@ import android.widget.ImageView;
 
 import com.hwx.rx_chat.common.request.ProfileInfoUpdateRequest;
 import com.hwx.rx_chat.common.response.DialogResponse;
+import com.hwx.rx_chat.common.response.FriendResponse;
+import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
+import com.hwx.rx_chat_client.fragment.FriendsFragment;
 import com.hwx.rx_chat_client.fragment.HomeFragment;
 import com.hwx.rx_chat_client.fragment.MessagesFragment;
 import com.hwx.rx_chat_client.fragment.ProfileFragment;
 import com.hwx.rx_chat_client.service.ChatRepository;
+import com.hwx.rx_chat_client.service.FriendRepository;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 import com.hwx.rx_chat_client.util.SingleLiveEvent;
@@ -42,8 +46,11 @@ public class HomeViewModel extends ViewModel {
 
 
     private ChatRepository chatRepository;
+    private FriendRepository friendRepository;
     private ResourceProvider resourceProvider;
     private SharedPreferencesProvider sharedPreferencesProvider;
+
+    //TODO memory lead, fix it...
     private static Picasso staticPicasso;
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
@@ -55,23 +62,25 @@ public class HomeViewModel extends ViewModel {
     public MutableLiveData<Boolean> isDialogsLoading = new MutableLiveData<>();
     private MutableLiveData<Fragment> ldTabSwitched = new MutableLiveData<>();
     private MutableLiveData<List<DialogResponse>> liveDialogList = new MutableLiveData<>();
+
     //мониторит выбор диалога в списке
     private SingleLiveEvent lvDialogPicked = new SingleLiveEvent();
 
 
     //profile fragment
-    public MutableLiveData<String> profileUsername = new MutableLiveData<>();
+//    public MutableLiveData<String> profileUsername = new MutableLiveData<>();
     private PublishSubject<Integer> psProfileLogout = PublishSubject.create();
+    private PublishSubject<String> psProfileSelected = PublishSubject.create();
+    private PublishSubject<UserDetailsResponse> psProfileSelectedLoaded = PublishSubject.create();
 
 
 
     public MutableLiveData<Drawable> homeTabDrawable = new MutableLiveData<>();
     public MutableLiveData<Drawable> messagesTabDrawable = new MutableLiveData<>();
     public MutableLiveData<Drawable> profileTabDrawable = new MutableLiveData<>();
+    public MutableLiveData<Drawable> friendsTabDrawable = new MutableLiveData<>();
 
     public MutableLiveData<String> homeTabText = new MutableLiveData<>();
-    public MutableLiveData<String> messagesTabText = new MutableLiveData<>();
-    public MutableLiveData<String> profileTabText = new MutableLiveData<>();
 
     //profile objects
     private MutableLiveData<String> lvProfileAvatarUrl = new MutableLiveData<>();
@@ -87,14 +96,22 @@ public class HomeViewModel extends ViewModel {
     private PublishSubject<Integer> psProfileImage = PublishSubject.create();
 
 
+    //friends objects:
+    private MutableLiveData<Integer> isFriendsListVisible = new MutableLiveData<>();
+    private MutableLiveData<Boolean> isFriendsListLoading = new MutableLiveData<>();
+    private MutableLiveData<List<FriendResponse>> lvFriendsList = new MutableLiveData<>();
+
+
     public HomeViewModel(
               ChatRepository chatRepository
+            , FriendRepository friendRepository
             , ResourceProvider resourceProvider
             , SharedPreferencesProvider sharedPreferencesProvider
-              , Picasso picasso
+            , Picasso picasso
 
     ) {
         this.chatRepository = chatRepository;
+        this.friendRepository = friendRepository;
         this.resourceProvider = resourceProvider;
         this.sharedPreferencesProvider = sharedPreferencesProvider;
         staticPicasso = picasso;
@@ -104,6 +121,10 @@ public class HomeViewModel extends ViewModel {
         isDialogsVisible.setValue(View.GONE);
         isDialogsLoading.setValue(false);
         onTabSelected(HomeTab.HOME);
+
+
+        isFriendsListVisible.setValue(View.GONE);
+        isFriendsListLoading.setValue(false);
 
         SharedPreferences pref = sharedPreferencesProvider.getSharedPreferences("localPref", 0);
         headersMap.put("Authorization", pref.getString("token", ""));
@@ -115,9 +136,8 @@ public class HomeViewModel extends ViewModel {
         lvProfileBio.setValue(pref.getString("profileBio", ""));
         lvProfileUsername.setValue(pref.getString("username", ""));
 
-
+        subscribePublishers();
     }
-
 
     public MutableLiveData<List<DialogResponse>> getLiveDialogList() {
         return liveDialogList;
@@ -214,7 +234,43 @@ public class HomeViewModel extends ViewModel {
         this.psProfileImage = psProfileImage;
     }
 
-    // Loading Image using Glide Library.
+    public MutableLiveData<Integer> getIsFriendsListVisible() {
+        return isFriendsListVisible;
+    }
+
+    public void setIsFriendsListVisible(MutableLiveData<Integer> isFriendsListVisible) {
+        this.isFriendsListVisible = isFriendsListVisible;
+    }
+
+    public MutableLiveData<Boolean> getIsFriendsListLoading() {
+        return isFriendsListLoading;
+    }
+
+    public void setIsFriendsListLoading(MutableLiveData<Boolean> isFriendsListLoading) {
+        this.isFriendsListLoading = isFriendsListLoading;
+    }
+
+    public MutableLiveData<List<FriendResponse>> getLvFriendsList() {
+        return lvFriendsList;
+    }
+
+    public void setLvFriendsList(MutableLiveData<List<FriendResponse>> lvFriendsList) {
+        this.lvFriendsList = lvFriendsList;
+    }
+
+    public PublishSubject<String> getPsProfileSelected() {
+        return psProfileSelected;
+    }
+
+    public PublishSubject<UserDetailsResponse> getPsProfileSelectedLoaded() {
+        return psProfileSelectedLoaded;
+    }
+
+    public Picasso getPicasso() {
+        return staticPicasso;
+    }
+
+    // Loading Image using Picasso
     @BindingAdapter("imageUrl")
     public static void setLvProfileAvatarUrl(ImageView imageView, String url){
         staticPicasso
@@ -232,26 +288,55 @@ public class HomeViewModel extends ViewModel {
                 break;
 
             case MESSAGES:
-                messagesTabDrawable.setValue(resourceProvider.getDrawable(R.drawable.ic_messages_dark));
-                messagesTabText.setValue(resourceProvider.getString(R.string.messages));
+                messagesTabDrawable.setValue(resourceProvider.getDrawable(R.drawable.ic_message_dark));
                 showMessagesFragment();
                 break;
             case PROFILE:
                 profileTabDrawable.setValue(resourceProvider.getDrawable(R.drawable.ic_user_dark));
-                profileTabText.setValue(resourceProvider.getString(R.string.profile));
                 showProfileFragment();
+                break;
+            case FRIENDS:
+                friendsTabDrawable.setValue(resourceProvider.getDrawable(R.drawable.ic_friends_dark));
+                showFriendsFragment();
                 break;
         }
     }
 
+    private void showFriendsFragment() {
+        ldTabSwitched.setValue(new FriendsFragment());
+    }
+
     private void resetTabs() {
         homeTabDrawable.setValue(resourceProvider.getDrawable(R.drawable.ic_home_light));
-        messagesTabDrawable.setValue(resourceProvider.getDrawable(R.drawable.ic_messages_light));
+        messagesTabDrawable.setValue(resourceProvider.getDrawable(R.drawable.ic_message_light));
         profileTabDrawable.setValue(resourceProvider.getDrawable(R.drawable.ic_user_light));
+        friendsTabDrawable.setValue(resourceProvider.getDrawable(R.drawable.ic_friends_light));
 
         homeTabText.setValue("");
-        messagesTabText.setValue("");
-        profileTabText.setValue("");
+
+    }
+
+    private void subscribePublishers() {
+        compositeDisposable.add(
+            psProfileSelected
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::sendProfileInfoRequest
+                    , err->Log.e("AVX", "err", err))
+        );
+    }
+
+    private void sendProfileInfoRequest(String profileId) {
+        compositeDisposable.add(
+            chatRepository
+                .getProfileInfo(Configuration.URL_GET_PROFILE_INFO+"/"+profileId, headersMap)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                     profileInfo -> psProfileSelectedLoaded.onNext(profileInfo)
+                    ,err->Log.e("AVX", "err", err)
+                )
+        );
     }
 
 
@@ -261,7 +346,8 @@ public class HomeViewModel extends ViewModel {
 
 
 
-        Disposable disposable = chatRepository
+        Disposable disposable =
+            chatRepository
                 .getDialogList(
                   headersMap
                 , sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("user_id", "")
@@ -276,6 +362,30 @@ public class HomeViewModel extends ViewModel {
                 }, throwable -> Log.e("AVX", "Error on api call:", throwable));
         compositeDisposable.add(disposable);
     }
+
+    public void onRefreshFriendsList() {
+        isFriendsListLoading.setValue(true);
+        isFriendsListVisible.setValue(View.GONE);
+
+        Log.w("AVX", "before sending userId="+sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("user_id", ""));
+
+        Disposable disposable = chatRepository
+                .getFriendList(
+                          headersMap
+                        , sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("user_id", "")
+                )
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(friendsList -> {
+                    lvFriendsList.setValue(friendsList);
+                    isFriendsListLoading.setValue(false);
+                    isFriendsListVisible.setValue(View.VISIBLE);
+
+                }, throwable -> Log.e("AVX", "Error on api call:", throwable));
+        compositeDisposable.add(disposable);
+    }
+
+
 
     private void showHomeFragment() {
         ldTabSwitched.setValue(new HomeFragment());
@@ -348,5 +458,30 @@ public class HomeViewModel extends ViewModel {
                 }, e->Log.e("AVX", "err", e))
         );
 
+    }
+
+    public void sendFriendRequestAccept(String requestID) {
+        compositeDisposable.add(
+            friendRepository
+                .acceptFriendRequest(headersMap, requestID)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(e->{
+                        Log.i("AVX", "got answer from server" + e.getCode()+" "+e.getMessage());
+                    }, e->Log.e("AVX", "err", e))
+        );
+
+    }
+
+    public void sendFriendRequestReject(String requestID) {
+        compositeDisposable.add(
+                friendRepository
+                        .rejectFriendRequest(headersMap, requestID)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(e->{
+                            Log.i("AVX", "got answer from server" + e.getCode()+" "+e.getMessage());
+                        }, e->Log.e("AVX", "err", e))
+        );
     }
 }
