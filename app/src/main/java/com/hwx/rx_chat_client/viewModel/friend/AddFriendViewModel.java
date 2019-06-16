@@ -9,8 +9,8 @@ import android.view.View;
 import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
-import com.hwx.rx_chat_client.service.ChatRepository;
-import com.hwx.rx_chat_client.service.FriendRepository;
+import com.hwx.rx_chat_client.repository.ChatRepository;
+import com.hwx.rx_chat_client.repository.FriendRepository;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 import com.squareup.picasso.Picasso;
 

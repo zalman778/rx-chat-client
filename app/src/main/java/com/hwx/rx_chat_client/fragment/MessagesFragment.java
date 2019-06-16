@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +14,7 @@ import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.adapter.DialogElementAdapter;
 import com.hwx.rx_chat_client.databinding.FragmentMessagesBinding;
 import com.hwx.rx_chat_client.util.ViewModelFactory;
-import com.hwx.rx_chat_client.view.ConversationActivity;
+import com.hwx.rx_chat_client.view.dialog.ConversationActivity;
 import com.hwx.rx_chat_client.viewModel.HomeViewModel;
 import com.hwx.rx_chat_client.viewModel.misc.DialogListAndIdDialogHolder;
 
@@ -60,7 +59,6 @@ public class MessagesFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        Log.w("AVX", "messages:63; got lifecycleOwner="+getViewLifecycleOwner().toString());
 
         //for case when fragment destroyed and subscribtions should no longer come to closed fragment..
         //when recieving list of dialogs..
@@ -76,6 +74,8 @@ public class MessagesFragment extends Fragment {
                     startActivity(ConversationActivity.getIntent(getActivity(), ((DialogListAndIdDialogHolder) o).getIdDialog()));
                 }
         );
+
+        getActivity().setTitle("Dialogs");
 
         homeViewModel.onRefreshDialogs();
     }

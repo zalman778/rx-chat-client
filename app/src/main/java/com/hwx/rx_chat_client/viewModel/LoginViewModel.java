@@ -8,7 +8,7 @@ import android.view.View;
 
 import com.hwx.rx_chat.common.response.LoginResponse;
 import com.hwx.rx_chat_client.model.LoginUser;
-import com.hwx.rx_chat_client.service.ChatRepository;
+import com.hwx.rx_chat_client.repository.ChatRepository;
 
 import java.util.Objects;
 

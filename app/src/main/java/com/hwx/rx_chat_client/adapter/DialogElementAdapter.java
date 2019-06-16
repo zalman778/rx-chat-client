@@ -11,7 +11,7 @@ import android.view.ViewGroup;
 import com.hwx.rx_chat.common.response.DialogResponse;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.databinding.ActivityDialogElementBinding;
-import com.hwx.rx_chat_client.service.ChatRepository;
+import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.viewModel.DialogElementViewModel;
 import com.hwx.rx_chat_client.viewModel.misc.DialogListAndIdDialogHolder;
 

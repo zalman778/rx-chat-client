@@ -21,6 +21,9 @@ import android.support.annotation.NonNull;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
+
+import com.hwx.rx_chat_client.R;
 
 /**
  * An implementation of {@link ItemTouchHelper.Callback} that enables basic drag & drop and
@@ -83,6 +86,7 @@ public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
 
     @Override
     public void onSwiped(RecyclerView.ViewHolder viewHolder, int i) {
+
         // Notify the adapter of the dismissal
         if (direction) {
             viewHolder.itemView.setTranslationX(0);
@@ -101,7 +105,12 @@ public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
         } else {
             direction = false;
         }
-        mAdapter.onItemSwipping(viewHolder.getAdapterPosition(), direction);
+
+        //returning back background, if swipe cancelled
+        if (dX == 0.0f && !isCurrentlyActive)
+            viewHolder.itemView.setBackgroundResource(R.color.transparent);
+        else
+            mAdapter.onItemSwipping(viewHolder.getAdapterPosition(), direction);
 
     }
 

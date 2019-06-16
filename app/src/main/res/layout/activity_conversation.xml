@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        tools:context="com.hwx.rx_chat_client.view.ConversationActivity">
+        tools:context="com.hwx.rx_chat_client.view.dialog.ConversationActivity">
 
         <ImageButton
             android:id="@+id/btnSend"

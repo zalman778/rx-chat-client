@@ -1,4 +1,4 @@
-package com.hwx.rx_chat_client.service;
+package com.hwx.rx_chat_client.repository;
 
 import com.hwx.rx_chat.common.entity.rx.RxMessage;
 import com.hwx.rx_chat.common.request.ProfileInfoUpdateRequest;
@@ -8,6 +8,7 @@ import com.hwx.rx_chat.common.response.DialogResponse;
 import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat.common.response.LoginResponse;
 import com.hwx.rx_chat.common.response.UserDetailsResponse;
+import com.hwx.rx_chat_client.service.ChatService;
 
 import java.util.List;
 import java.util.Map;

@@ -6,9 +6,9 @@ import android.support.annotation.NonNull;
 
 import com.hwx.rx_chat_client.rsocket.ChatSocket;
 import com.hwx.rx_chat_client.rsocket.SocketServer;
-import com.hwx.rx_chat_client.service.ChatRepository;
-import com.hwx.rx_chat_client.service.DialogRepository;
-import com.hwx.rx_chat_client.service.FriendRepository;
+import com.hwx.rx_chat_client.repository.ChatRepository;
+import com.hwx.rx_chat_client.repository.DialogRepository;
+import com.hwx.rx_chat_client.repository.FriendRepository;
 import com.hwx.rx_chat_client.viewModel.HomeViewModel;
 import com.hwx.rx_chat_client.viewModel.LoginViewModel;
 import com.hwx.rx_chat_client.viewModel.SignupViewModel;
@@ -72,7 +72,7 @@ public class ViewModelFactory implements ViewModelProvider.Factory {
             return (T) new AddFriendViewModel(friendRepository, chatRepository, sharedPreferencesProvider, picasso);
         }
         if (modelClass.isAssignableFrom(ProfileViewModel.class)) {
-            return (T) new ProfileViewModel(sharedPreferencesProvider, chatRepository, dialogRepository, picasso);
+            return (T) new ProfileViewModel(sharedPreferencesProvider, friendRepository, dialogRepository, picasso);
         }
         throw new IllegalArgumentException("Unknown class name");
     }

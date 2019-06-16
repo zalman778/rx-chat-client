@@ -10,8 +10,9 @@ import android.widget.ImageView;
 
 import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
-import com.hwx.rx_chat_client.service.ChatRepository;
-import com.hwx.rx_chat_client.service.DialogRepository;
+import com.hwx.rx_chat_client.repository.ChatRepository;
+import com.hwx.rx_chat_client.repository.DialogRepository;
+import com.hwx.rx_chat_client.repository.FriendRepository;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 import com.squareup.picasso.Picasso;
 
@@ -30,6 +31,7 @@ public class ProfileViewModel extends ViewModel {
     private static Picasso staticPicasso;
     private ChatRepository chatRepository;
     private DialogRepository dialogRepository;
+    private FriendRepository friendRepository;
     private String profileId;
     private String userId;
 
@@ -53,12 +55,12 @@ public class ProfileViewModel extends ViewModel {
 
     public ProfileViewModel(
               SharedPreferencesProvider sharedPreferencesProvider
-            , ChatRepository chatRepository
+            , FriendRepository friendRepository
             , DialogRepository dialogRepository
             , Picasso picasso
     ) {
         this.sharedPreferencesProvider = sharedPreferencesProvider;
-        this.chatRepository = chatRepository;
+        this.friendRepository = friendRepository;
         this.dialogRepository = dialogRepository;
         staticPicasso = picasso;
 
@@ -146,14 +148,28 @@ public class ProfileViewModel extends ViewModel {
                 .findOrCreateDialog(Configuration.URL_DIALOGS_FIND_OR_CREATE + "/"+userId+"/"+profileId, headersMap)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(resp->psDialogOpenAction.onNext(resp.getValue())
+                .subscribe(
+                          resp-> {
+                              psDialogOpenAction.onNext(resp.getValue());
+
+                          }
                         , err-> Log.e("AVX", "err", err))
 
         );
     }
 
     public void onClickSendFriendRequest() {
-
+        compositeDisposable.add(
+            friendRepository.createFriendRequest(Configuration.URL_FRIENDS_REQUEST_CREATE+"/"+profileId, headersMap)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                          resp-> {
+                              if (!resp.getCode().equals("err"))
+                                lvVisibilitySendFriendRequest.setValue(View.GONE);
+                          }
+                        , err-> Log.e("AVX", "err", err))
+        );
     }
 
     @Override

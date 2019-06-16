@@ -1,6 +1,6 @@
 package com.hwx.rx_chat_client.di;
 
-import com.hwx.rx_chat_client.view.ConversationActivity;
+import com.hwx.rx_chat_client.view.dialog.ConversationActivity;
 import com.hwx.rx_chat_client.view.HomeActivity;
 import com.hwx.rx_chat_client.view.LoginActivity;
 import com.hwx.rx_chat_client.view.SignupActivity;

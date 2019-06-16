@@ -28,6 +28,7 @@ public class Configuration {
     public static final String URL_MESSAGES_LIST = HTTPS_SERVER_URL + "api/messages";
 
     public static final String URL_FRIENDS_LIST = HTTPS_SERVER_URL + "api/friends";
+    public static final String URL_FRIENDS_REQUEST_CREATE = HTTPS_SERVER_URL + "api/friends/request/create";
     public static final String URL_FRIENDS_REQUEST_ACCEPT = HTTPS_SERVER_URL + "api/friends/request/accept";
     public static final String URL_FRIENDS_REQUEST_REJECT = HTTPS_SERVER_URL + "api/friends/request/reject";
 

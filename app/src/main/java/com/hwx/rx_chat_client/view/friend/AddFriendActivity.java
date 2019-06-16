@@ -86,6 +86,7 @@ public class AddFriendActivity extends AppCompatActivity {
         activityAddFriendBinding = DataBindingUtil.setContentView(this, R.layout.activity_add_friend);
         activityAddFriendBinding.setLifecycleOwner(this);
         activityAddFriendBinding.setAddFriendViewModel(addFriendViewModel);
+
     }
 
     private void initRecyclerViewAdapter() {
@@ -94,7 +95,8 @@ public class AddFriendActivity extends AppCompatActivity {
 
         friendElementAdapter = new FriendElementAdapter(
                 //TODO - change lvDialog picked!!
-                addFriendViewModel.getPsProfileSelected(), this, addFriendViewModel.getHeadersMap(), addFriendViewModel.getChatRepository(), addFriendViewModel.getPicasso()
+                addFriendViewModel.getPsProfileSelected(), this, addFriendViewModel.getHeadersMap()
+                , addFriendViewModel.getChatRepository(), addFriendViewModel.getPicasso(), activityAddFriendBinding.listUsers
         );
         activityAddFriendBinding.listUsers.setLayoutManager(new LinearLayoutManager(this));
         activityAddFriendBinding.listUsers.setAdapter(friendElementAdapter);

@@ -1,4 +1,4 @@
-package com.hwx.rx_chat_client.view;
+package com.hwx.rx_chat_client.view.dialog;
 
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
@@ -22,7 +22,6 @@ import com.hwx.rx_chat_client.databinding.ActivityConversationBinding;
 import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.hwx.rx_chat_client.view.friend.ProfileActivity;
 import com.hwx.rx_chat_client.viewModel.conversation.ConversationViewModel;
-import com.hwx.rx_chat_client.viewModel.misc.DialogListAndIdDialogHolder;
 
 import javax.inject.Inject;
 
@@ -194,7 +193,8 @@ public class ConversationActivity extends AppCompatActivity {
                                                 (dialog, whichButton) ->
                                                         conversationElementAdapter.performRollbackMessageViewSwipe(msgId)
                                         )
-                                        .show())
+                                        .show()
+                                , e-> Log.e("AVX", "error on req", e))
         );
 
         //отслеживаем запросы на редактирование сообщений

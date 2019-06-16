@@ -5,7 +5,7 @@ import android.arch.lifecycle.ViewModel;
 import android.view.View;
 
 import com.hwx.rx_chat.common.request.SignupRequest;
-import com.hwx.rx_chat_client.service.ChatRepository;
+import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 

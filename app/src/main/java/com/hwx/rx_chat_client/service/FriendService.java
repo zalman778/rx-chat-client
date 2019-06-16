@@ -8,8 +8,10 @@ import java.util.Map;
 import io.reactivex.Observable;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
+import retrofit2.http.GET;
 import retrofit2.http.HeaderMap;
 import retrofit2.http.POST;
+import retrofit2.http.Url;
 
 public interface FriendService {
 
@@ -25,5 +27,11 @@ public interface FriendService {
     Observable<DefaultResponse> rejectFriendRequest(
               @HeaderMap Map<String, String> headers
             , @Field("requestId") String requestId
+    );
+
+    @GET
+    Observable<DefaultResponse> createFriendRequest(
+              @Url String url
+            , @HeaderMap Map<String, String> headers
     );
 }

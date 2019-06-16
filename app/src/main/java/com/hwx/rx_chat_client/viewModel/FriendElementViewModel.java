@@ -3,14 +3,13 @@ package com.hwx.rx_chat_client.viewModel;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 import android.databinding.BindingAdapter;
-import android.net.wifi.aware.PublishConfig;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
 import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat_client.Configuration;
-import com.hwx.rx_chat_client.service.ChatRepository;
+import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.squareup.picasso.Picasso;
 
 import java.util.Map;

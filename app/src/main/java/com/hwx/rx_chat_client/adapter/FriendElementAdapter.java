@@ -13,7 +13,8 @@ import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.adapter.misc.ItemTouchHelperAdapter;
 import com.hwx.rx_chat_client.databinding.ActivityFriendElementBinding;
-import com.hwx.rx_chat_client.service.ChatRepository;
+import com.hwx.rx_chat_client.databinding.FragmentFriendsBinding;
+import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.viewModel.FriendElementViewModel;
 import com.hwx.rx_chat_client.viewModel.misc.DialogListAndIdDialogHolder;
 import com.squareup.picasso.Picasso;
@@ -40,8 +41,10 @@ public class FriendElementAdapter
     private ChatRepository chatRepository;
     private Picasso picasso;
 
-    private PublishSubject<String> psFriendRequestReject = PublishSubject.create();
-    private PublishSubject<String> psFriendRequestAccept = PublishSubject.create();
+    private RecyclerView recyclerViewlistUsers;
+
+    private PublishSubject<Integer> psFriendRequestReject = PublishSubject.create();
+    private PublishSubject<Integer> psFriendRequestAccept = PublishSubject.create();
 
     //key - dialogId
     private Map<String, FriendElementViewModel> viewModelsMap = new HashMap<>();
@@ -52,12 +55,14 @@ public class FriendElementAdapter
             , Map<String, String> headersMap
             , ChatRepository chatRepository
             , Picasso picasso
+            , RecyclerView recyclerViewlistUsers
     ) {
         this.lifecycleOwner = lifecycleOwner;
         this.psProfileSelected = psProfileSelected;
         this.headersMap = headersMap;
         this.chatRepository = chatRepository;
         this.picasso = picasso;
+        this.recyclerViewlistUsers = recyclerViewlistUsers;
     }
 
     public void setFriendList(List<FriendResponse> friendList) {
@@ -72,15 +77,19 @@ public class FriendElementAdapter
         notifyItemInserted(this.friendList.size());
     }
 
+    public FriendResponse getFriendReponseByAdapterPosition(Integer adapterPosition) {
+        return friendList.get(adapterPosition);
+    }
+
     public Map<String, FriendElementViewModel> getViewModelsMap() {
         return viewModelsMap;
     }
 
-    public PublishSubject<String> getPsFriendRequestReject() {
+    public PublishSubject<Integer> getPsFriendRequestReject() {
         return psFriendRequestReject;
     }
 
-    public PublishSubject<String> getPsFriendRequestAccept() {
+    public PublishSubject<Integer> getPsFriendRequestAccept() {
         return psFriendRequestAccept;
     }
 
@@ -116,6 +125,23 @@ public class FriendElementAdapter
         return friendList.size();
     }
 
+    public void performRejectFriendRequest(int adapterPosition) {
+        viewModelsMap.remove(friendList.get(adapterPosition).getUserId());
+        friendList.remove(adapterPosition);
+        notifyItemRemoved(adapterPosition);
+    }
+
+    public void performAcceptFriendRequest(String reqId) {
+        //? wait for rx?
+    }
+
+    public void performRollbackFriendRequest(int adapterPosition) {
+        RecyclerView.ViewHolder viewHolder = recyclerViewlistUsers.findViewHolderForAdapterPosition(adapterPosition);
+
+        viewHolder.itemView.setTranslationX(0);
+        viewHolder.itemView.setAlpha(1f);
+        notifyItemChanged(adapterPosition);
+    }
 
 
     public static class FriendElementViewHolder extends RecyclerView.ViewHolder {
@@ -142,21 +168,24 @@ public class FriendElementAdapter
         return false;
     }
 
-    //dismiss friend request
-    @Override
-    public void onItemSwipeLeft(int position) {
-        psFriendRequestReject.onNext(friendList.get(position).getUserId());
-    }
+
 
     @Override
     public void onItemSwipping(int adapterPosition, Boolean direction) {
         //TODO change background color...
     }
 
+    //dismiss friend request
+    @Override
+    public void onItemSwipeLeft(int position) {
+        psFriendRequestReject.onNext(position/*friendList.get(position).getRequestId()*/);
+
+    }
+
     //accept friend request
     @Override
     public void onItemSwapRight(int adapterPosition) {
-        psFriendRequestAccept.onNext(friendList.get(adapterPosition).getRequestId());
+        psFriendRequestAccept.onNext(adapterPosition);
     }
 
     @Override

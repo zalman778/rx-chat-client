@@ -56,66 +56,10 @@ public class HomeActivity extends AppCompatActivity {
         //иначе грузим меню и все остальное
         ((RxChatApplication) getApplication()).getAppComponent().doInjectHomeActivity(this);
         initDataBinding();
-
-        //обработка нажатия logout
-        compositeDisposable.add(
-            homeViewModel
-                .getPsProfileLogout()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(integer -> {
-                    Log.d("avx", "onChanged:logoutListenner");
-                    SharedPreferences pref1 = getApplicationContext().getSharedPreferences("localPref", 0);
-                    SharedPreferences.Editor editor = pref1.edit();
-                    editor.putString("user_id", null);
-                    editor.putString("username", null);
-                    editor.putString("token", null);
-                    editor.putBoolean("logged_in", false);
-
-                    editor.putString("profileAvatarUrl", null);
-                    editor.putString("profileFirstName", null);
-                    editor.putString("profileLastName", null);
-                    editor.putString("profileBio", null);
-
-                    editor.apply();
-                    //recreate();
-                    finish();
-                    startActivity(LoginActivity.getIntent(HomeActivity.this));
-                })
-        );
-
-        //обработка нажатия save profile
-        compositeDisposable.add(
-            homeViewModel
-                .getPsProfileSave()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(e->{
-                    homeViewModel.getLvProfileProgressVisibility().setValue(View.VISIBLE);
-
-                })
-        );
-
-        //обработка нажатия image pick
-        compositeDisposable.add(
-            homeViewModel
-                .getPsProfileImage()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(e->{
-                    Intent intent = new Intent(getBaseContext(), ImageSelectActivity.class);
-                    intent.putExtra(ImageSelectActivity.FLAG_COMPRESS, false);//default is true
-                    intent.putExtra(ImageSelectActivity.FLAG_CAMERA, true);//default is true
-                    intent.putExtra(ImageSelectActivity.FLAG_GALLERY, true);//default is true
-                    startActivityForResult(intent, 1213);
-
-                })
-        );
-
-        //обработка выбора фрагмента
-        homeViewModel.getLdTabSwitched().observe(this, this::replaceFragment);
-
+        subscribePublishers();
     }
+
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -128,12 +72,7 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    private void initDataBinding() {
-        homeViewModel = ViewModelProviders.of(this, viewModelFactory).get(HomeViewModel.class);
-        activityHomeBinding = DataBindingUtil.setContentView(this, R.layout.activity_home);
-        activityHomeBinding.setLifecycleOwner(this);
-        activityHomeBinding.setVm(homeViewModel);
-    }
+
 
     public static Intent getIntent(Context context) {
         return new Intent(context, HomeActivity.class);
@@ -143,6 +82,73 @@ public class HomeActivity extends AppCompatActivity {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.container, fragment);
         transaction.commit();
+    }
+
+    private void initDataBinding() {
+        homeViewModel = ViewModelProviders.of(this, viewModelFactory).get(HomeViewModel.class);
+        activityHomeBinding = DataBindingUtil.setContentView(this, R.layout.activity_home);
+        activityHomeBinding.setLifecycleOwner(this);
+        activityHomeBinding.setVm(homeViewModel);
+    }
+
+    private void subscribePublishers() {
+        //обработка нажатия logout
+        compositeDisposable.add(
+                homeViewModel
+                        .getPsProfileLogout()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(integer -> {
+                            Log.d("avx", "onChanged:logoutListenner");
+                            SharedPreferences pref1 = getApplicationContext().getSharedPreferences("localPref", 0);
+                            SharedPreferences.Editor editor = pref1.edit();
+                            editor.putString("user_id", null);
+                            editor.putString("username", null);
+                            editor.putString("token", null);
+                            editor.putBoolean("logged_in", false);
+
+                            editor.putString("profileAvatarUrl", null);
+                            editor.putString("profileFirstName", null);
+                            editor.putString("profileLastName", null);
+                            editor.putString("profileBio", null);
+
+                            editor.apply();
+                            //recreate();
+                            finish();
+                            startActivity(LoginActivity.getIntent(HomeActivity.this));
+                        })
+        );
+
+        //обработка нажатия save profile
+        compositeDisposable.add(
+                homeViewModel
+                        .getPsProfileSave()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(e->{
+                            homeViewModel.getLvProfileProgressVisibility().setValue(View.VISIBLE);
+
+                        })
+        );
+
+        //обработка нажатия image pick
+        compositeDisposable.add(
+                homeViewModel
+                        .getPsProfileImage()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(e->{
+                            Intent intent = new Intent(getBaseContext(), ImageSelectActivity.class);
+                            intent.putExtra(ImageSelectActivity.FLAG_COMPRESS, false);//default is true
+                            intent.putExtra(ImageSelectActivity.FLAG_CAMERA, true);//default is true
+                            intent.putExtra(ImageSelectActivity.FLAG_GALLERY, true);//default is true
+                            startActivityForResult(intent, 1213);
+
+                        })
+        );
+
+        //обработка выбора фрагмента
+        homeViewModel.getLdTabSwitched().observe(this, this::replaceFragment);
     }
 
     @Override

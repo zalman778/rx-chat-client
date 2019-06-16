@@ -13,7 +13,7 @@ import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.RxChatApplication;
 import com.hwx.rx_chat_client.databinding.ActivityProfileBinding;
 import com.hwx.rx_chat_client.util.ViewModelFactory;
-import com.hwx.rx_chat_client.view.ConversationActivity;
+import com.hwx.rx_chat_client.view.dialog.ConversationActivity;
 import com.hwx.rx_chat_client.viewModel.friend.ProfileViewModel;
 
 import javax.inject.Inject;

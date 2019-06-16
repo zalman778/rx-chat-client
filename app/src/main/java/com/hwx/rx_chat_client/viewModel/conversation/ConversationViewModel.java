@@ -15,7 +15,7 @@ import com.hwx.rx_chat.common.object.rx.types.SettingType;
 import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.rsocket.ChatSocket;
-import com.hwx.rx_chat_client.service.ChatRepository;
+import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 import com.squareup.picasso.Picasso;

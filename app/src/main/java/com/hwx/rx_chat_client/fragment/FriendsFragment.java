@@ -5,6 +5,7 @@ import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
@@ -61,7 +62,8 @@ public class FriendsFragment extends Fragment {
 
 
         friendElementAdapter = new FriendElementAdapter(
-             homeViewModel.getPsProfileSelected(), getActivity(), homeViewModel.getHeadersMap(), homeViewModel.getChatRepository(), homeViewModel.getPicasso()
+             homeViewModel.getPsProfileSelected(), getActivity(), homeViewModel.getHeadersMap()
+                , homeViewModel.getChatRepository(), homeViewModel.getPicasso(), fragmentFriendsBinding.listFriends
         );
         fragmentFriendsBinding.listFriends.setLayoutManager(new LinearLayoutManager(getActivity()));
         fragmentFriendsBinding.listFriends.setAdapter(friendElementAdapter);
@@ -70,6 +72,8 @@ public class FriendsFragment extends Fragment {
         ItemTouchHelper.Callback callback = new ItemTouchHelperCallback(friendElementAdapter);
         ItemTouchHelper mItemTouchHelper = new ItemTouchHelper(callback);
         mItemTouchHelper.attachToRecyclerView(fragmentFriendsBinding.listFriends);
+
+        getActivity().setTitle("Friends");
 
         return view;
     }
@@ -113,10 +117,26 @@ public class FriendsFragment extends Fragment {
                         .getPsFriendRequestAccept()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(e->{
-                            homeViewModel.sendFriendRequestAccept(e);
-                            //adapter check for err...
-                        }, e-> Log.e("AVX", "error on req", e))
+                        .subscribe(adapterPosition->{
+                            new AlertDialog.Builder(getActivity())
+                                    .setTitle("Friend request accepting")
+                                    .setMessage("Do you really want to accept this request from  \""+
+                                            friendElementAdapter.getFriendReponseByAdapterPosition(adapterPosition).getUsername()+"\" ?")
+                                    .setIcon(android.R.drawable.ic_dialog_alert)
+                                    .setPositiveButton(android.R.string.yes,
+                                            (dialog, whichButton) -> {
+                                                homeViewModel.sendFriendRequestAccept(
+                                                        friendElementAdapter.getFriendReponseByAdapterPosition(adapterPosition).getRequestId()
+                                                );
+                                                homeViewModel.onRefreshFriendsList();
+                                            })
+                                    .setNegativeButton(android.R.string.no,
+                                            (dialog, whichButton) ->
+                                                    friendElementAdapter.performRollbackFriendRequest(adapterPosition)
+                                    )
+                                    .show();
+
+                         }, e-> Log.e("AVX", "error on req", e))
         );
 
         compositeDisposable.add(
@@ -124,8 +144,25 @@ public class FriendsFragment extends Fragment {
                         .getPsFriendRequestReject()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(e->{
-                            homeViewModel.sendFriendRequestReject(e);
+                        .subscribe(adapterPosition->{
+                            new AlertDialog.Builder(getActivity())
+                                    .setTitle("Friend request rejecting")
+                                    .setMessage("Do you really want to reject this request from \""+
+                                            friendElementAdapter.getFriendReponseByAdapterPosition(adapterPosition).getUsername()+"\" ?")
+                                    .setIcon(android.R.drawable.ic_dialog_alert)
+                                    .setPositiveButton(android.R.string.yes,
+                                            (dialog, whichButton) -> {
+                                                homeViewModel.sendFriendRequestReject(
+                                                        friendElementAdapter.getFriendReponseByAdapterPosition(adapterPosition).getRequestId()
+                                                );
+                                                friendElementAdapter.performRejectFriendRequest(adapterPosition);
+                                            })
+                                    .setNegativeButton(android.R.string.no,
+                                            (dialog, whichButton) ->
+                                                    friendElementAdapter.performRollbackFriendRequest(adapterPosition)
+                                    )
+                                    .show();
+
                             //adapter check for err...
                         }, e-> Log.e("AVX", "error on req", e))
         );

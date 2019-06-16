@@ -49,7 +49,7 @@ public class ProfileFragment extends Fragment {
         fragmentProfileBinding.setHomeViewModel(homeViewModel);
         fragmentProfileBinding.setLifecycleOwner(this);
 
-
+        getActivity().setTitle("Profile");
 
         return view;
     }

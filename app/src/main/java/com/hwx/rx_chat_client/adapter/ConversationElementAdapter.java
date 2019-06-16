@@ -158,23 +158,26 @@ public class ConversationElementAdapter
     }
 
     public void performRollbackMessageViewSwipe(String messageId) {
-        Log.i("AVX"," got performRollbackMessageViewSwipe for msgId="+messageId+" and pos="+getMessagePositionByMessageId(messageId));
-
 
         if (getMessagePositionByMessageId(messageId) != null) {
             int msgPos = getMessagePositionByMessageId(messageId);
-            Log.i("AVX", "performRollbackMessageViewSwipe:160 pos="+msgPos);
             RecyclerView.ViewHolder viewHolder = activityConversationBinding.listMessages.findViewHolderForAdapterPosition(msgPos);
 
             viewHolder.itemView.setTranslationX(0);
             viewHolder.itemView.setAlpha(1f);
-            notifyItemChanged(msgPos);
+            //notifyItemChanged(msgPos);
         }
     }
 
     @Override
     public void onItemSwipping(int adapterPosition, Boolean direction) {
         //в этом методе только меняем фон... TODO... нельзя тут вызывать notifyItemChanged
+
+        RecyclerView.ViewHolder viewHolder = activityConversationBinding.listMessages.findViewHolderForAdapterPosition(adapterPosition);
+        if (direction)
+            viewHolder.itemView.setBackgroundResource(R.color.green);
+        else
+            viewHolder.itemView.setBackgroundResource(R.color.red);
 
     }
 
