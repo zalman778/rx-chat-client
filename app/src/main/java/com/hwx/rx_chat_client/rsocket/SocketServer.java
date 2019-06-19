@@ -31,15 +31,15 @@ public class SocketServer {
                 .secure(sslContext);
 
         HttpServer httpServer = HttpServer.from(tcpServer);
-        monoCloseable = RSocketFactory
-                .receive()
-
-                .acceptor((a, b)-> acceptorHandler(a, b))
-                .transport(
-                        // TcpServerTransport.create("localhost", PORT)
-                        WebsocketServerTransport.create(httpServer)
-                )
-                .start();
+//        monoCloseable = RSocketFactory
+//                .receive()
+//
+//                .acceptor((a, b)-> acceptorHandler(a, b))
+//                .transport(
+//                        // TcpServerTransport.create("localhost", RSOCKET_PORT)
+//                        WebsocketServerTransport.create(httpServer)
+//                )
+//                .start();
     }
 
     private Mono<RSocket> acceptorHandler(ConnectionSetupPayload a, RSocket b) {

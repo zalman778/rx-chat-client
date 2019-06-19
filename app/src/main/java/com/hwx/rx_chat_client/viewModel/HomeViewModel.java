@@ -10,18 +10,23 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
+import com.hwx.rx_chat.common.entity.rx.RxMessage;
+import com.hwx.rx_chat.common.object.rx.RxObject;
+import com.hwx.rx_chat.common.object.rx.types.ObjectType;
+import com.hwx.rx_chat.common.object.rx.types.SettingType;
 import com.hwx.rx_chat.common.request.ProfileInfoUpdateRequest;
 import com.hwx.rx_chat.common.response.DialogResponse;
 import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
+import com.hwx.rx_chat_client.fragment.DialogsFragment;
 import com.hwx.rx_chat_client.fragment.FriendsFragment;
 import com.hwx.rx_chat_client.fragment.HomeFragment;
-import com.hwx.rx_chat_client.fragment.MessagesFragment;
 import com.hwx.rx_chat_client.fragment.ProfileFragment;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.repository.FriendRepository;
+import com.hwx.rx_chat_client.rsocket.ChatSocket;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 import com.hwx.rx_chat_client.util.SingleLiveEvent;
@@ -29,6 +34,7 @@ import com.hwx.rx_chat_client.view.misc.HomeTab;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +42,7 @@ import java.util.Map;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.processors.PublishProcessor;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 import okhttp3.MediaType;
@@ -49,6 +56,7 @@ public class HomeViewModel extends ViewModel {
     private FriendRepository friendRepository;
     private ResourceProvider resourceProvider;
     private SharedPreferencesProvider sharedPreferencesProvider;
+    private ChatSocket chatSocket;
 
     //TODO memory lead, fix it...
     private static Picasso staticPicasso;
@@ -56,6 +64,7 @@ public class HomeViewModel extends ViewModel {
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private Map<String, String> headersMap = new HashMap<>();
+    private String userId;
 
     //dialogs fragment
     public MutableLiveData<Integer> isDialogsVisible = new MutableLiveData<>();
@@ -66,14 +75,16 @@ public class HomeViewModel extends ViewModel {
     //мониторит выбор диалога в списке
     private SingleLiveEvent lvDialogPicked = new SingleLiveEvent();
 
+    //получает события в сокет - пока не используется
+    private PublishProcessor<RxObject> ppDialogFragment = PublishProcessor.create();
+
+    private PublishSubject<RxMessage> psRecievedRxMessageAction = PublishSubject.create();
+
 
     //profile fragment
-//    public MutableLiveData<String> profileUsername = new MutableLiveData<>();
     private PublishSubject<Integer> psProfileLogout = PublishSubject.create();
     private PublishSubject<String> psProfileSelected = PublishSubject.create();
     private PublishSubject<UserDetailsResponse> psProfileSelectedLoaded = PublishSubject.create();
-
-
 
     public MutableLiveData<Drawable> homeTabDrawable = new MutableLiveData<>();
     public MutableLiveData<Drawable> messagesTabDrawable = new MutableLiveData<>();
@@ -107,6 +118,7 @@ public class HomeViewModel extends ViewModel {
             , FriendRepository friendRepository
             , ResourceProvider resourceProvider
             , SharedPreferencesProvider sharedPreferencesProvider
+            , ChatSocket chatSocket
             , Picasso picasso
 
     ) {
@@ -114,6 +126,7 @@ public class HomeViewModel extends ViewModel {
         this.friendRepository = friendRepository;
         this.resourceProvider = resourceProvider;
         this.sharedPreferencesProvider = sharedPreferencesProvider;
+        this.chatSocket = chatSocket;
         staticPicasso = picasso;
 
         lvProfileProgressVisibility.setValue(View.GONE);
@@ -128,6 +141,7 @@ public class HomeViewModel extends ViewModel {
 
         SharedPreferences pref = sharedPreferencesProvider.getSharedPreferences("localPref", 0);
         headersMap.put("Authorization", pref.getString("token", ""));
+        userId =  pref.getString("user_id", "");
 
         //loading bio from prefs:
         lvProfileAvatarUrl.setValue(pref.getString("profileAvatarUrl", ""));
@@ -188,74 +202,28 @@ public class HomeViewModel extends ViewModel {
         return lvProfileProgressVisibility;
     }
 
-
-
-    public void setLvProfileUsername(MutableLiveData<String> lvProfileUsername) {
-        this.lvProfileUsername = lvProfileUsername;
-    }
-
-    public void setLvProfileFirstname(MutableLiveData<String> lvProfileFirstname) {
-        this.lvProfileFirstname = lvProfileFirstname;
-    }
-
-    public void setLvProfileBio(MutableLiveData<String> lvProfileBio) {
-        this.lvProfileBio = lvProfileBio;
-    }
-
-    public void setLvProfileRequestResult(MutableLiveData<String> lvProfileRequestResult) {
-        this.lvProfileRequestResult = lvProfileRequestResult;
-    }
-
-    public void setLvProfileProgressVisibility(MutableLiveData<Integer> lvProfileProgressVisibility) {
-        this.lvProfileProgressVisibility = lvProfileProgressVisibility;
-    }
-
     public MutableLiveData<String> getLvProfileLastname() {
         return lvProfileLastname;
-    }
-
-    public void setLvProfileLastname(MutableLiveData<String> lvProfileLastname) {
-        this.lvProfileLastname = lvProfileLastname;
     }
 
     public PublishSubject<Integer> getPsProfileSave() {
         return psProfileSave;
     }
 
-    public void setPsProfileSave(PublishSubject<Integer> psProfileSave) {
-        this.psProfileSave = psProfileSave;
-    }
-
     public PublishSubject<Integer> getPsProfileImage() {
         return psProfileImage;
-    }
-
-    public void setPsProfileImage(PublishSubject<Integer> psProfileImage) {
-        this.psProfileImage = psProfileImage;
     }
 
     public MutableLiveData<Integer> getIsFriendsListVisible() {
         return isFriendsListVisible;
     }
 
-    public void setIsFriendsListVisible(MutableLiveData<Integer> isFriendsListVisible) {
-        this.isFriendsListVisible = isFriendsListVisible;
-    }
-
     public MutableLiveData<Boolean> getIsFriendsListLoading() {
         return isFriendsListLoading;
     }
 
-    public void setIsFriendsListLoading(MutableLiveData<Boolean> isFriendsListLoading) {
-        this.isFriendsListLoading = isFriendsListLoading;
-    }
-
     public MutableLiveData<List<FriendResponse>> getLvFriendsList() {
         return lvFriendsList;
-    }
-
-    public void setLvFriendsList(MutableLiveData<List<FriendResponse>> lvFriendsList) {
-        this.lvFriendsList = lvFriendsList;
     }
 
     public PublishSubject<String> getPsProfileSelected() {
@@ -264,6 +232,10 @@ public class HomeViewModel extends ViewModel {
 
     public PublishSubject<UserDetailsResponse> getPsProfileSelectedLoaded() {
         return psProfileSelectedLoaded;
+    }
+
+    public PublishSubject<RxMessage> getPsRecievedRxMessageAction() {
+        return psRecievedRxMessageAction;
     }
 
     public Picasso getPicasso() {
@@ -289,7 +261,7 @@ public class HomeViewModel extends ViewModel {
 
             case MESSAGES:
                 messagesTabDrawable.setValue(resourceProvider.getDrawable(R.drawable.ic_message_dark));
-                showMessagesFragment();
+                showDialogsFragment();
                 break;
             case PROFILE:
                 profileTabDrawable.setValue(resourceProvider.getDrawable(R.drawable.ic_user_dark));
@@ -324,6 +296,28 @@ public class HomeViewModel extends ViewModel {
                 .subscribe(this::sendProfileInfoRequest
                     , err->Log.e("AVX", "err", err))
         );
+
+        compositeDisposable.add(
+            chatSocket
+                .getEventChannel(ppDialogFragment)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(rxObject -> {
+                    //Fixing time from Mongo if its message:
+                    if (rxObject.getMessage() != null) {
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime(rxObject.getMessage().getDateSent());
+                        cal.add(Calendar.HOUR_OF_DAY, Configuration.MONGO_TIMEZONE_CORRECTION_HRS);
+                        rxObject.getMessage().setDateSent(cal.getTime());
+
+                        //updating message viewmodel:
+                        psRecievedRxMessageAction.onNext(rxObject.getMessage());
+                    }
+                    Log.w("AVX", "GOT in hvm : rxObj = "+rxObject.toString());
+                    //psRxMessage.onNext(rxObject);
+                }, e->Log.e("AVX", "err on rx "+e.getMessage()+"; "+e.getLocalizedMessage(), e))
+        );
+
     }
 
     private void sendProfileInfoRequest(String profileId) {
@@ -350,7 +344,7 @@ public class HomeViewModel extends ViewModel {
             chatRepository
                 .getDialogList(
                   headersMap
-                , sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("user_id", "")
+                , userId
                 )
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -367,12 +361,10 @@ public class HomeViewModel extends ViewModel {
         isFriendsListLoading.setValue(true);
         isFriendsListVisible.setValue(View.GONE);
 
-        Log.w("AVX", "before sending userId="+sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("user_id", ""));
-
         Disposable disposable = chatRepository
                 .getFriendList(
                           headersMap
-                        , sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("user_id", "")
+                        , userId
                 )
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -391,8 +383,11 @@ public class HomeViewModel extends ViewModel {
         ldTabSwitched.setValue(new HomeFragment());
     }
 
-    private void showMessagesFragment() {
-        ldTabSwitched.setValue(new MessagesFragment());
+    private void showDialogsFragment() {
+        Log.w("AVX", "rx setted userId = "+userId);
+        RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.ID_USER, userId, null);
+        ppDialogFragment.onNext(rxObject);
+        ldTabSwitched.setValue(new DialogsFragment());
     }
 
     private void showProfileFragment() {
@@ -400,8 +395,6 @@ public class HomeViewModel extends ViewModel {
     }
 
     public void onProfileAvatarClick(View view) {
-
-        Log.i("AVX", "avatar");
         psProfileImage.onNext(1);
     }
 
@@ -426,8 +419,7 @@ public class HomeViewModel extends ViewModel {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(e->{
                     lvProfileProgressVisibility.setValue(View.GONE);
-                    //Log.i("AVX", "got answer from server" + e.getCode()+" "+e.getMessage());
-                    if (!e.getCode().equals("err")) {
+                    if (e.getCode().equals("err")) {
                         lvProfileRequestResult.setValue("Error: "+e.getMessage());
                         //TODO - special activity for changing username...
                     }

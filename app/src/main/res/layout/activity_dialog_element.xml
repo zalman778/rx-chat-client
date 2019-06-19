@@ -8,7 +8,7 @@
 
         <variable
             name="dialogElementViewModel"
-            type="com.hwx.rx_chat_client.viewModel.DialogElementViewModel"/>
+            type="com.hwx.rx_chat_client.viewModel.conversation.DialogElementViewModel"/>
     </data>
 
     <android.support.v7.widget.CardView
@@ -100,7 +100,7 @@
                 android:layout_gravity="left"
                 android:layout_marginLeft="110dp"
                 android:layout_marginTop="@dimen/spacing_medium"
-                android:text="@{dialogElementViewModel.dialogLastMessage}"
+                android:text="@={dialogElementViewModel.dialogLastMessage}"
                 android:textColor="@color/colorAccent"
                 android:textSize="12sp"
                 tools:ignore="RtlCompat"

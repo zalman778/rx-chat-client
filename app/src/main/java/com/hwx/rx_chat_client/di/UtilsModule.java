@@ -225,7 +225,7 @@ public class UtilsModule {
     @Provides
     @Singleton
     public ChatSocket getChatSocket() {
-        return new ChatSocket(getNettySslContext(), getObjectMapper());
+        return ChatSocket.openSocketA(getNettySslContext(), getObjectMapper());
     }
 
     @Provides

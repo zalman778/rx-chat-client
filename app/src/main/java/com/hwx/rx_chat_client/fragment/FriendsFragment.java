@@ -42,6 +42,8 @@ public class FriendsFragment extends Fragment {
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private FriendElementAdapter friendElementAdapter;
 
+
+
     public FriendsFragment() {
 
     }
@@ -63,7 +65,7 @@ public class FriendsFragment extends Fragment {
 
         friendElementAdapter = new FriendElementAdapter(
              homeViewModel.getPsProfileSelected(), getActivity(), homeViewModel.getHeadersMap()
-                , homeViewModel.getChatRepository(), homeViewModel.getPicasso(), fragmentFriendsBinding.listFriends
+                , homeViewModel.getChatRepository(), homeViewModel.getPicasso(), fragmentFriendsBinding.listFriends, false
         );
         fragmentFriendsBinding.listFriends.setLayoutManager(new LinearLayoutManager(getActivity()));
         fragmentFriendsBinding.listFriends.setAdapter(friendElementAdapter);

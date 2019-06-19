@@ -8,7 +8,7 @@
 
         <variable
             name="friendElementViewModel"
-            type="com.hwx.rx_chat_client.viewModel.FriendElementViewModel"/>
+            type="com.hwx.rx_chat_client.viewModel.friend.FriendElementViewModel"/>
     </data>
 
     <android.support.v7.widget.CardView

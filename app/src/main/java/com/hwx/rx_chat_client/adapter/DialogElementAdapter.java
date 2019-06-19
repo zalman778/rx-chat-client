@@ -8,13 +8,16 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
+import com.hwx.rx_chat.common.entity.rx.RxMessage;
 import com.hwx.rx_chat.common.response.DialogResponse;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.databinding.ActivityDialogElementBinding;
 import com.hwx.rx_chat_client.repository.ChatRepository;
-import com.hwx.rx_chat_client.viewModel.DialogElementViewModel;
+import com.hwx.rx_chat_client.util.SingleLiveEvent;
+import com.hwx.rx_chat_client.viewModel.conversation.DialogElementViewModel;
 import com.hwx.rx_chat_client.viewModel.misc.DialogListAndIdDialogHolder;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +28,7 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
 
     private List<DialogResponse> dialogList = new ArrayList<>();
     private LifecycleOwner lifecycleOwner;
-    private MutableLiveData<DialogListAndIdDialogHolder> lvDialogPicked;
+    private SingleLiveEvent lvDialogPicked;
     private Map<String, String> headersMap;
     private ChatRepository chatRepository;
 
@@ -33,7 +36,7 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
     private Map<String, DialogElementViewModel> viewModelsMap = new HashMap<>();
 
     public DialogElementAdapter(
-              MutableLiveData<DialogListAndIdDialogHolder> lvDialogPicked
+              SingleLiveEvent lvDialogPicked
             , LifecycleOwner lifecycleOwner
             , Map<String, String> headersMap
             , ChatRepository chatRepository
@@ -43,6 +46,39 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
         this.headersMap = headersMap;
         this.chatRepository = chatRepository;
     }
+
+    //смотрим есть ли такой диалог, если есть, то в нем обновляем инфу, если нет, то создаем новый
+    public void createOrUpdateDialogByRxMessage(RxMessage rxMessage) {
+        //dialogList.stream().filter(e->e.getDialogId().equals(rxMessage.getIdDialog())).findFirst().orElseGet(null);
+
+        Integer dialogPosition = getAdapterPositionByDialogId(rxMessage.getIdDialog());
+        if (dialogPosition != null) {
+            DialogResponse tempResponse = dialogList.get(dialogPosition);
+            tempResponse.setLastMessage(rxMessage.getValue());
+            tempResponse.setLastDate(rxMessage.getDateSent());
+            tempResponse.setLastUser(rxMessage.getUserFromName());
+            dialogList.remove(dialogPosition);
+            dialogList.add(0, tempResponse);
+            notifyDataSetChanged();
+        } else {
+            DialogResponse dialogResponse = new DialogResponse();
+            dialogResponse.setDialogName(rxMessage.getIdDialog());//todo? where to get dialog name?!
+            dialogResponse.setLastUser(rxMessage.getUserFromName());
+            dialogResponse.setLastMessage(rxMessage.getValue());
+            dialogResponse.setLastDate(rxMessage.getDateSent());
+            dialogList.add(0, dialogResponse);
+            notifyItemInserted(this.dialogList.size());
+        }
+    }
+
+    public Integer getAdapterPositionByDialogId(String dialogId) {
+        for (int i = 0; i < dialogList.size(); i++) {
+            if (dialogList.get(i).getDialogId().equals(dialogId))
+                return i;
+        }
+        return null;
+    }
+
 
     public void setDialogList(List<DialogResponse> dialogList) {
         this.dialogList = dialogList;
@@ -71,16 +107,11 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
 
     @Override
     public void onBindViewHolder(@NonNull DialogElementViewHolder dialogElementViewHolder, int i) {
-        //Log.w("AVX", "called onBindViewHolder for i="+i+" where dialogName="+dialogList.get(i).getDialogName());
+
         String dialogId = dialogList.get(i).getDialogId();
 
         if (viewModelsMap.get(dialogId) == null) {
-            DialogElementViewModel dialogElementViewModel = new DialogElementViewModel(dialogList.get(i), headersMap, chatRepository);
-            dialogElementViewModel.getLvDialogPicked().observe(lifecycleOwner, o -> {
-                DialogListAndIdDialogHolder holder = new DialogListAndIdDialogHolder(dialogId, (ArrayList<DialogResponse>)o);
-                lvDialogPicked.setValue(holder);
-            });
-
+            DialogElementViewModel dialogElementViewModel = new DialogElementViewModel(dialogList.get(i), headersMap, chatRepository, lvDialogPicked);
             viewModelsMap.put(dialogId, dialogElementViewModel);
         }
         dialogElementViewHolder.bindDialogElement(dialogList.get(i), viewModelsMap.get(dialogId));
@@ -104,7 +135,6 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
                 DialogResponse dialogResponse,
                 DialogElementViewModel dialogElementViewModel) {
              activityDialogElementBinding.setDialogElementViewModel(dialogElementViewModel);
-
              activityDialogElementBinding.getDialogElementViewModel().setDialogResponse(dialogResponse);
         }
     }

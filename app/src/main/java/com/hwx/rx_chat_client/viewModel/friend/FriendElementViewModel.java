@@ -1,4 +1,4 @@
-package com.hwx.rx_chat_client.viewModel;
+package com.hwx.rx_chat_client.viewModel.friend;
 
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
@@ -9,31 +9,32 @@ import android.widget.ImageView;
 
 import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat_client.Configuration;
-import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.squareup.picasso.Picasso;
 
-import java.util.Map;
-
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.subjects.PublishSubject;
 
 public class FriendElementViewModel extends ViewModel {
     private MutableLiveData<String> lvImageUrl = new MutableLiveData<>();
     private MutableLiveData<String> lvUsername = new MutableLiveData<>();
+
     private String userId;
-    private PublishSubject<String> psProfileSelected = PublishSubject.create();
+    private boolean canBePicked;
+    private boolean isPicked = false;
 
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
+    private PublishSubject<String> psProfileSelected;
+    private PublishSubject<String> psProfilePicked;
 
-    private Map<String, String> headersMap;
-    private ChatRepository chatRepository;
+
+
     //TODO fix memory leak!
     private static Picasso staticPicasso;
 
-    public FriendElementViewModel(FriendResponse friendResponse, Map<String, String> headersMap, ChatRepository chatRepository, Picasso picasso) {
+
+    public FriendElementViewModel(FriendResponse friendResponse, PublishSubject<String> psProfileSelected,  PublishSubject<String> psProfilePicked, Picasso picasso, boolean canBePicked) {
         setFriendResponse(friendResponse);
-        this.headersMap = headersMap;
-        this.chatRepository = chatRepository;
+        this.psProfileSelected = psProfileSelected;
+        this.psProfilePicked = psProfilePicked;
+        this.canBePicked = canBePicked;
         staticPicasso = picasso;
     }
 
@@ -55,6 +56,10 @@ public class FriendElementViewModel extends ViewModel {
 
     public PublishSubject<String> getPsProfileSelected() {
         return psProfileSelected;
+    }
+
+    public boolean isPicked() {
+        return isPicked;
     }
 
     // Loading Image using Picasso
@@ -79,7 +84,12 @@ public class FriendElementViewModel extends ViewModel {
 
 
     public void onUserSelected(View view) {
-        psProfileSelected.onNext(userId);
+        if (canBePicked) {
+            isPicked = !isPicked;
+            psProfilePicked.onNext(userId);
+        }
+        else
+            psProfileSelected.onNext(userId);
     }
 
 

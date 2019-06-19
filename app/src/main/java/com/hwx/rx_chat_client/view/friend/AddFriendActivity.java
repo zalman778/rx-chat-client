@@ -96,7 +96,7 @@ public class AddFriendActivity extends AppCompatActivity {
         friendElementAdapter = new FriendElementAdapter(
                 //TODO - change lvDialog picked!!
                 addFriendViewModel.getPsProfileSelected(), this, addFriendViewModel.getHeadersMap()
-                , addFriendViewModel.getChatRepository(), addFriendViewModel.getPicasso(), activityAddFriendBinding.listUsers
+                , addFriendViewModel.getChatRepository(), addFriendViewModel.getPicasso(), activityAddFriendBinding.listUsers, false
         );
         activityAddFriendBinding.listUsers.setLayoutManager(new LinearLayoutManager(this));
         activityAddFriendBinding.listUsers.setAdapter(friendElementAdapter);

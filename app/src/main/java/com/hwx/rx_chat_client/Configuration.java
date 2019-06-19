@@ -6,8 +6,14 @@ import android.util.Log;
 import com.hwx.rx_chat_client.util.NetworkUtil;
 
 public class Configuration {
-    public static final int PORT = 7878;
-    public static final int RSOCKET_CLIENT_SERVER_PORT = 8113;
+    //Rsocket config:
+    public static final int RSOCKET_PORT = 7878;
+    public static final int RSOCKET_TICK_PERIOD = 42;
+    public static final int RSOCKET_ACK_PERIOD = 60;
+    public static final int RSOCKET_MISSED_ACKS = 10;
+
+
+    //public static final int RSOCKET_CLIENT_SERVER_PORT = 8113;
     //avd:
     public static final String IP = BuildConfig.ServerIpAddr;
 
@@ -24,6 +30,7 @@ public class Configuration {
 
     public static final String URL_DIALOGS_LIST = HTTPS_SERVER_URL + "api/dialogs";
     public static final String URL_DIALOGS_FIND_OR_CREATE = HTTPS_SERVER_URL + "api/dialog/find_or_create";
+    public static final String URL_DIALOGS_CREATE = HTTPS_SERVER_URL + "api/dialog/create";
 
     public static final String URL_MESSAGES_LIST = HTTPS_SERVER_URL + "api/messages";
 
@@ -39,6 +46,7 @@ public class Configuration {
 
 
     public static final Integer MONGO_TIMEZONE_CORRECTION_HRS = 3;
+
 
     public static Boolean IS_TEST_STANDS = true;
 

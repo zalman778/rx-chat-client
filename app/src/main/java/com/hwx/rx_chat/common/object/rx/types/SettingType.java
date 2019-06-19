@@ -4,5 +4,6 @@ import java.io.Serializable;
 
 public enum SettingType implements Serializable {
      ID_DIALOG
+    ,ID_USER
     ,USERNAME
 }

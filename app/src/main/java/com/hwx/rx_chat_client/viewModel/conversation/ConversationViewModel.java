@@ -71,15 +71,15 @@ public class ConversationViewModel extends ViewModel {
     private HashSet<String> uniqueMessagesIdSet = new HashSet<>();
 
     private Boolean isEditingMessage = false;
-    private RxMessage editatbleMessage;
+    private RxMessage editableMessage;
 
 
     public ConversationViewModel(
-            ChatRepository chatRepository
+              ChatRepository chatRepository
             , ResourceProvider resourceProvider
             , SharedPreferencesProvider sharedPreferencesProvider
-            , ChatSocket chatSocket,
-            Picasso picasso) {
+            , ChatSocket chatSocket
+            , Picasso picasso) {
 
         this.chatRepository = chatRepository;
         this.resourceProvider = resourceProvider;
@@ -102,7 +102,7 @@ public class ConversationViewModel extends ViewModel {
         //получаем реактивно сообщения
         disposables.add(
                 chatSocket
-                        .getPsRxMessage()
+                        .getPsRxMessageA()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(rxObject -> {
@@ -114,7 +114,8 @@ public class ConversationViewModel extends ViewModel {
                                 rxObject.getMessage().setDateSent(cal.getTime());
                             }
                             psRxMessage.onNext(rxObject);
-                        }, e->Log.e("AVX", "err on rx", e))
+                        },
+                                e->Log.e("AVX", "err on rx "+e.getMessage()+"; "+e.getLocalizedMessage(), e))
         );
 
         disposables.add(
@@ -141,19 +142,19 @@ public class ConversationViewModel extends ViewModel {
 
     private void sendSettingDialogId() {
         RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.ID_DIALOG, idDialog, null);
-        chatSocket.putRxObject(rxObject);
+        chatSocket.putRxObjectA(rxObject);
     }
 
     private void sendSettingUsername() {
         String username = sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("username", "");
         RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.USERNAME, username, null);
-        chatSocket.putRxObject(rxObject);
+        chatSocket.putRxObjectA(rxObject);
     }
 
 
     public void sendRxEventMessageDelete(String messageId) {
         RxObject rxObject = new RxObject(ObjectType.EVENT, EventType.MESSAGE_DELETED, messageId, (RxMessage)null);
-        chatSocket.putRxObject(rxObject);
+        chatSocket.putRxObjectA(rxObject);
     }
 
     public Picasso getPicasso() {
@@ -260,23 +261,23 @@ public class ConversationViewModel extends ViewModel {
     public void onBtnCloseEdit(View view) {
 
         //отправляем в активити действие на отмену свайпа сообщения
-        psPerformRollbackMessageSwipe.onNext(editatbleMessage.getId());
+        psPerformRollbackMessageSwipe.onNext(editableMessage.getId());
 
         lvEditMessageVisibility.setValue(View.GONE);
         lvEditMessageOriginalText.setValue("");
         lvSendPanelText.setValue("");
-        editatbleMessage = null;
+        editableMessage = null;
         this.isEditingMessage = false;
     }
 
     public void onBtnSend(View view) {
         if (isEditingMessage) {
 
-            editatbleMessage.setValue(lvSendPanelText.getValue());
+            editableMessage.setValue(lvSendPanelText.getValue());
 
-            RxObject rxObject = new RxObject(ObjectType.EVENT, EventType.MESSAGE_EDIT, null, editatbleMessage);
-            editatbleMessage = null;
-            chatSocket.putRxObject(rxObject);
+            RxObject rxObject = new RxObject(ObjectType.EVENT, EventType.MESSAGE_EDIT, null, editableMessage);
+            editableMessage = null;
+            chatSocket.putRxObjectA(rxObject);
 
             //closing everything
             lvEditMessageVisibility.setValue(View.GONE);
@@ -297,7 +298,7 @@ public class ConversationViewModel extends ViewModel {
 
             Log.w("AVX", "sending rx message:"+rxMessage.getValue());
             RxObject rxObject = new RxObject(ObjectType.EVENT, EventType.MESSAGE_NEW_FROM_CLIENT, null, rxMessage);
-            chatSocket.putRxObject(rxObject);
+            chatSocket.putRxObjectA(rxObject);
 
         }
     }
@@ -306,7 +307,7 @@ public class ConversationViewModel extends ViewModel {
         lvEditMessageVisibility.setValue(View.VISIBLE);
         lvEditMessageOriginalText.setValue("Оригинальный текст: "+rxMsg.getValue());
         lvSendPanelText.setValue(rxMsg.getValue());
-        editatbleMessage = rxMsg;
+        editableMessage = rxMsg;
         this.isEditingMessage = true;
     }
 

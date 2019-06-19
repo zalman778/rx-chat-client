@@ -34,7 +34,7 @@ public class SignupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
 
-        ((RxChatApplication) getApplication()).getAppComponent().doInjectSignupRepository(this);
+        ((RxChatApplication) getApplication()).getAppComponent().doInjectSignupActivity(this);
         initDataBinding();
 
         compositeDisposable.add(

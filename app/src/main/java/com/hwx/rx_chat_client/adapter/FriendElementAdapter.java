@@ -13,9 +13,8 @@ import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.adapter.misc.ItemTouchHelperAdapter;
 import com.hwx.rx_chat_client.databinding.ActivityFriendElementBinding;
-import com.hwx.rx_chat_client.databinding.FragmentFriendsBinding;
 import com.hwx.rx_chat_client.repository.ChatRepository;
-import com.hwx.rx_chat_client.viewModel.FriendElementViewModel;
+import com.hwx.rx_chat_client.viewModel.friend.FriendElementViewModel;
 import com.hwx.rx_chat_client.viewModel.misc.DialogListAndIdDialogHolder;
 import com.squareup.picasso.Picasso;
 
@@ -23,8 +22,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 
@@ -40,11 +43,15 @@ public class FriendElementAdapter
     private Map<String, String> headersMap;
     private ChatRepository chatRepository;
     private Picasso picasso;
+    private boolean isMultiselectMode;
 
     private RecyclerView recyclerViewlistUsers;
 
     private PublishSubject<Integer> psFriendRequestReject = PublishSubject.create();
     private PublishSubject<Integer> psFriendRequestAccept = PublishSubject.create();
+    private PublishSubject<String> psProfilePicked = PublishSubject.create();
+
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     //key - dialogId
     private Map<String, FriendElementViewModel> viewModelsMap = new HashMap<>();
@@ -56,6 +63,7 @@ public class FriendElementAdapter
             , ChatRepository chatRepository
             , Picasso picasso
             , RecyclerView recyclerViewlistUsers
+            , boolean isMultiselectMode
     ) {
         this.lifecycleOwner = lifecycleOwner;
         this.psProfileSelected = psProfileSelected;
@@ -63,6 +71,42 @@ public class FriendElementAdapter
         this.chatRepository = chatRepository;
         this.picasso = picasso;
         this.recyclerViewlistUsers = recyclerViewlistUsers;
+        this.isMultiselectMode = isMultiselectMode;
+
+        subscribePublishers();
+    }
+
+    private Integer getAdapterPositionByKey(String key) {
+        for (int i = 0; i < friendList.size(); i++) {
+            if (friendList.get(i).getUserId().equals(key))
+                return i;
+        }
+        return null;
+    }
+
+    public List<String> getListOfSelectedProfiles() {
+        return viewModelsMap.keySet().stream().filter(e->viewModelsMap.get(e).isPicked()).collect(Collectors.toList());
+    }
+
+    private void subscribePublishers() {
+        Log.w("AVX", "isMultiselectMode = "+isMultiselectMode);
+        if (isMultiselectMode) {
+            compositeDisposable.add(
+                    psProfilePicked
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(profileId -> {
+                                        Integer pos = getAdapterPositionByKey(profileId);
+                                        if (pos != null) {
+                                            if (viewModelsMap.get(profileId).isPicked())
+                                                recyclerViewlistUsers.findViewHolderForAdapterPosition(pos).itemView.setBackgroundResource(R.color.light_gray);
+                                            else
+                                                recyclerViewlistUsers.findViewHolderForAdapterPosition(pos).itemView.setBackgroundResource(R.color.white);
+                                        }
+                                    }, err -> Log.e("AVX", "err", err)
+                            )
+            );
+        }
     }
 
     public void setFriendList(List<FriendResponse> friendList) {
@@ -107,14 +151,7 @@ public class FriendElementAdapter
         String userId = friendList.get(i).getUserId();
 
         if (viewModelsMap.get(userId) == null) {
-            FriendElementViewModel friendElementViewModel = new FriendElementViewModel(friendList.get(i), headersMap, chatRepository, picasso);
-            friendElementViewModel.getPsProfileSelected()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(profileId-> {
-                        psProfileSelected.onNext(profileId);
-            });
-
+            FriendElementViewModel friendElementViewModel = new FriendElementViewModel(friendList.get(i), psProfileSelected, psProfilePicked, picasso, isMultiselectMode);
             viewModelsMap.put(userId, friendElementViewModel);
         }
         friendElementViewHolder.bindFriendElement(friendList.get(i), viewModelsMap.get(userId));

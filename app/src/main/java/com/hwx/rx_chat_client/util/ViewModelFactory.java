@@ -13,6 +13,7 @@ import com.hwx.rx_chat_client.viewModel.HomeViewModel;
 import com.hwx.rx_chat_client.viewModel.LoginViewModel;
 import com.hwx.rx_chat_client.viewModel.SignupViewModel;
 import com.hwx.rx_chat_client.viewModel.conversation.ConversationViewModel;
+import com.hwx.rx_chat_client.viewModel.conversation.CreateDialogViewModel;
 import com.hwx.rx_chat_client.viewModel.friend.AddFriendViewModel;
 import com.hwx.rx_chat_client.viewModel.friend.ProfileViewModel;
 import com.squareup.picasso.Picasso;
@@ -60,7 +61,7 @@ public class ViewModelFactory implements ViewModelProvider.Factory {
             return (T) new LoginViewModel(chatRepository);
         }
         if (modelClass.isAssignableFrom(HomeViewModel.class)) {
-            return (T) new HomeViewModel(chatRepository, friendRepository, resourceProvider, sharedPreferencesProvider, picasso);
+            return (T) new HomeViewModel(chatRepository, friendRepository, resourceProvider, sharedPreferencesProvider, chatSocket, picasso);
         }
         if (modelClass.isAssignableFrom(ConversationViewModel.class)) {
             return (T) new ConversationViewModel(chatRepository, resourceProvider, sharedPreferencesProvider, chatSocket, picasso);
@@ -73,6 +74,10 @@ public class ViewModelFactory implements ViewModelProvider.Factory {
         }
         if (modelClass.isAssignableFrom(ProfileViewModel.class)) {
             return (T) new ProfileViewModel(sharedPreferencesProvider, friendRepository, dialogRepository, picasso);
+        }
+
+        if (modelClass.isAssignableFrom(CreateDialogViewModel.class)) {
+            return (T) new CreateDialogViewModel(dialogRepository, chatRepository, sharedPreferencesProvider, picasso);
         }
         throw new IllegalArgumentException("Unknown class name");
     }
