@@ -64,8 +64,15 @@ public class FriendsFragment extends Fragment {
 
 
         friendElementAdapter = new FriendElementAdapter(
-             homeViewModel.getPsProfileSelected(), getActivity(), homeViewModel.getHeadersMap()
-                , homeViewModel.getChatRepository(), homeViewModel.getPicasso(), fragmentFriendsBinding.listFriends, false
+                  homeViewModel.getPsProfileSelected()
+//                , homeViewModel.getPsFriendSwippedLeftAction()
+//                , homeViewModel.getPsFriendSwippedRightAction()
+                , getActivity()
+                , homeViewModel.getHeadersMap()
+                , homeViewModel.getChatRepository()
+                , homeViewModel.getPicasso()
+                , fragmentFriendsBinding.listFriends
+                , false
         );
         fragmentFriendsBinding.listFriends.setLayoutManager(new LinearLayoutManager(getActivity()));
         fragmentFriendsBinding.listFriends.setAdapter(friendElementAdapter);

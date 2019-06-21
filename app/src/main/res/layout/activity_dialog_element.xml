@@ -32,23 +32,23 @@
             android:layout_marginTop="@dimen/spacing_small"
             android:orientation="vertical">
 
-            <!--<de.hdodenhof.circleimageview.CircleImageView-->
-                <!--android:id="@+id/image_people"-->
-                <!--android:layout_width="100dp"-->
-                <!--android:layout_height="100dp"-->
-                <!--android:layout_gravity="left"-->
-                <!--tools:imageUrl="@{dialogElementViewModel.dialogImageUrl}"-->
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/image_people"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_gravity="left"
+                tools:imageUrl="@{dialogElementViewModel.dialogImageUrl}"
 
-                <!--/>-->
+                />
 
-            <TextView
-            android:id="@+id/image_people"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:layout_gravity="left"
+            <!--<TextView-->
+            <!--android:id="@+id/image_people"-->
+            <!--android:layout_width="100dp"-->
+            <!--android:layout_height="100dp"-->
+            <!--android:layout_gravity="left"-->
 
 
-            />
+            <!--/>-->
 
             <TextView
                 android:id="@+id/label_dialog_caption"

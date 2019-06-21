@@ -1,7 +1,6 @@
 package com.hwx.rx_chat_client.adapter;
 
 import android.arch.lifecycle.LifecycleOwner;
-import android.arch.lifecycle.MutableLiveData;
 import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -15,9 +14,8 @@ import com.hwx.rx_chat_client.databinding.ActivityDialogElementBinding;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.util.SingleLiveEvent;
 import com.hwx.rx_chat_client.viewModel.conversation.DialogElementViewModel;
-import com.hwx.rx_chat_client.viewModel.misc.DialogListAndIdDialogHolder;
+import com.squareup.picasso.Picasso;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +29,7 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
     private SingleLiveEvent lvDialogPicked;
     private Map<String, String> headersMap;
     private ChatRepository chatRepository;
+    private Picasso picasso;
 
     //key - dialogId
     private Map<String, DialogElementViewModel> viewModelsMap = new HashMap<>();
@@ -40,16 +39,17 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
             , LifecycleOwner lifecycleOwner
             , Map<String, String> headersMap
             , ChatRepository chatRepository
+            , Picasso picasso
     ) {
         this.lifecycleOwner = lifecycleOwner;
         this.lvDialogPicked = lvDialogPicked;
         this.headersMap = headersMap;
         this.chatRepository = chatRepository;
+        this.picasso = picasso;
     }
 
     //смотрим есть ли такой диалог, если есть, то в нем обновляем инфу, если нет, то создаем новый
     public void createOrUpdateDialogByRxMessage(RxMessage rxMessage) {
-        //dialogList.stream().filter(e->e.getDialogId().equals(rxMessage.getIdDialog())).findFirst().orElseGet(null);
 
         Integer dialogPosition = getAdapterPositionByDialogId(rxMessage.getIdDialog());
         if (dialogPosition != null) {
@@ -85,17 +85,6 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
         notifyDataSetChanged();
     }
 
-    //avx: test method:
-    public void addDialog(DialogResponse dialogResponse) {
-        this.dialogList.add(dialogResponse);
-        //notifyDataSetChanged();
-        notifyItemInserted(this.dialogList.size());
-    }
-
-    public Map<String, DialogElementViewModel> getViewModelsMap() {
-        return viewModelsMap;
-    }
-
     @NonNull
     @Override
     public DialogElementViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
@@ -111,7 +100,9 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
         String dialogId = dialogList.get(i).getDialogId();
 
         if (viewModelsMap.get(dialogId) == null) {
-            DialogElementViewModel dialogElementViewModel = new DialogElementViewModel(dialogList.get(i), headersMap, chatRepository, lvDialogPicked);
+            DialogElementViewModel dialogElementViewModel = new DialogElementViewModel(
+                    dialogList.get(i), headersMap, chatRepository, lvDialogPicked, picasso
+            );
             viewModelsMap.put(dialogId, dialogElementViewModel);
         }
         dialogElementViewHolder.bindDialogElement(dialogList.get(i), viewModelsMap.get(dialogId));

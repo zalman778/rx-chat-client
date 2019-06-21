@@ -10,6 +10,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import com.hwx.rx_chat.common.entity.rx.RxMessage;
 import com.hwx.rx_chat.common.object.rx.types.EventType;
@@ -31,7 +34,7 @@ import io.reactivex.schedulers.Schedulers;
 
 public class ConversationActivity extends AppCompatActivity {
 
-    private static final String EXTRA_MESSAGES_LIST = "EXTRA_MESSAGES_LIST";
+    //private static final String EXTRA_MESSAGES_LIST = "EXTRA_MESSAGES_LIST";
     private static final String EXTRA_DIALOG_ID = "EXTRA_DIALOG_ID";
 
     @Inject
@@ -61,6 +64,26 @@ public class ConversationActivity extends AppCompatActivity {
         initRecyclerViewAdapter();
         subscribePublishers();
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_dialog_profile_btn_options, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.btnDialogOptions:
+                //startActivity(DialogProfileActivity.getIntent(this, "0a"));
+                conversationViewModel.onClickDialogOptions();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
 
     private void initRecyclerViewAdapter() {
         conversationElementAdapter = new ConversationElementAdapter(
@@ -217,6 +240,16 @@ public class ConversationActivity extends AppCompatActivity {
                             startActivity(ProfileActivity.fillDetail(getApplicationContext(), userInfo));
                             //adapter check for err...
                         }, e-> Log.e("AVX", "error on req", e))
+        );
+
+        compositeDisposable.add(
+            conversationViewModel
+                    .getPsDialogInfoLoadFinishedAction()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(dialogInfo->{
+                    startActivity(DialogProfileActivity.getIntent(this, dialogInfo));
+                }, e-> Log.e("AVX", "error ", e))
         );
     }
 

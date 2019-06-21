@@ -93,6 +93,8 @@ public class HomeViewModel extends ViewModel {
 
     public MutableLiveData<String> homeTabText = new MutableLiveData<>();
 
+
+
     //profile objects
     private MutableLiveData<String> lvProfileAvatarUrl = new MutableLiveData<>();
     private MutableLiveData<String> lvProfileFirstname = new MutableLiveData<>();
@@ -111,6 +113,9 @@ public class HomeViewModel extends ViewModel {
     private MutableLiveData<Integer> isFriendsListVisible = new MutableLiveData<>();
     private MutableLiveData<Boolean> isFriendsListLoading = new MutableLiveData<>();
     private MutableLiveData<List<FriendResponse>> lvFriendsList = new MutableLiveData<>();
+
+    private PublishSubject<Integer> psFriendSwippedLeftAction = new PublishSubject<>();
+    private PublishSubject<Integer> psFriendSwippedRightAction = new PublishSubject<>();
 
 
     public HomeViewModel(
@@ -144,7 +149,10 @@ public class HomeViewModel extends ViewModel {
         userId =  pref.getString("user_id", "");
 
         //loading bio from prefs:
-        lvProfileAvatarUrl.setValue(pref.getString("profileAvatarUrl", ""));
+        String imageUrl = pref.getString("profileAvatarUrl", "");
+        if (imageUrl != null && !imageUrl.isEmpty())
+            lvProfileAvatarUrl.setValue(pref.getString("profileAvatarUrl", ""));
+
         lvProfileFirstname.setValue(pref.getString("profileFirstName", ""));
         lvProfileLastname.setValue(pref.getString("profileLastName", ""));
         lvProfileBio.setValue(pref.getString("profileBio", ""));
@@ -236,6 +244,14 @@ public class HomeViewModel extends ViewModel {
 
     public PublishSubject<RxMessage> getPsRecievedRxMessageAction() {
         return psRecievedRxMessageAction;
+    }
+
+    public PublishSubject<Integer> getPsFriendSwippedLeftAction() {
+        return psFriendSwippedLeftAction;
+    }
+
+    public PublishSubject<Integer> getPsFriendSwippedRightAction() {
+        return psFriendSwippedRightAction;
     }
 
     public Picasso getPicasso() {
@@ -445,7 +461,7 @@ public class HomeViewModel extends ViewModel {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(e->{
                     Log.i("AVX", "got answer from server" + e.getCode()+" "+e.getMessage());
-                    lvProfileAvatarUrl.setValue(Configuration.HTTPS_SERVER_URL +e.getValue());
+                    lvProfileAvatarUrl.setValue(Configuration.HTTPS_SERVER_URL + Configuration.IMAGE_PREFIX +e.getValue());
 
                 }, e->Log.e("AVX", "err", e))
         );

@@ -74,7 +74,10 @@ public class ProfileViewModel extends ViewModel {
 
     public void setUserDetailsResponse(UserDetailsResponse userDetailsResponse) {
         profileId = userDetailsResponse.getId();
-        lvProfileAvatarUrl.setValue(Configuration.HTTPS_SERVER_URL+userDetailsResponse.getImageUrl());
+        if (userDetailsResponse.getImageUrl() != null)
+            lvProfileAvatarUrl.setValue(
+                    Configuration.HTTPS_SERVER_URL + Configuration.IMAGE_PREFIX + userDetailsResponse.getImageUrl()
+            );
         lvProfileFirstname.setValue(userDetailsResponse.getFirstname());
         lvProfileLastname.setValue(userDetailsResponse.getLastname());
         lvProfileUsername.setValue(userDetailsResponse.getUsername());

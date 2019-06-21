@@ -22,9 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalInt;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -53,6 +51,9 @@ public class FriendElementAdapter
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
+//    private PublishSubject<Integer> psItemSwipedLeftAction;
+//    private PublishSubject<Integer> psItemSwipedRightAction;
+
     //key - dialogId
     private Map<String, FriendElementViewModel> viewModelsMap = new HashMap<>();
 
@@ -67,12 +68,13 @@ public class FriendElementAdapter
     ) {
         this.lifecycleOwner = lifecycleOwner;
         this.psProfileSelected = psProfileSelected;
+//        this.psItemSwipedLeftAction = psItemSwipedLeftAction;
+//        this.psItemSwipedRightAction = psItemSwipedRightAction;
         this.headersMap = headersMap;
         this.chatRepository = chatRepository;
         this.picasso = picasso;
         this.recyclerViewlistUsers = recyclerViewlistUsers;
         this.isMultiselectMode = isMultiselectMode;
-
         subscribePublishers();
     }
 
@@ -214,14 +216,16 @@ public class FriendElementAdapter
 
     //dismiss friend request
     @Override
-    public void onItemSwipeLeft(int position) {
-        psFriendRequestReject.onNext(position/*friendList.get(position).getRequestId()*/);
+    public void onItemSwipeLeft(int adapterPosition) {
+//        psItemSwipedLeftAction.onNext(adapterPosition);
+        psFriendRequestReject.onNext(adapterPosition);
 
     }
 
     //accept friend request
     @Override
     public void onItemSwapRight(int adapterPosition) {
+//        psItemSwipedRightAction.onNext(adapterPosition);
         psFriendRequestAccept.onNext(adapterPosition);
     }
 

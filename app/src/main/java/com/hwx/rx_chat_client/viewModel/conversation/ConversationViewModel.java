@@ -12,8 +12,10 @@ import com.hwx.rx_chat.common.object.rx.RxObject;
 import com.hwx.rx_chat.common.object.rx.types.EventType;
 import com.hwx.rx_chat.common.object.rx.types.ObjectType;
 import com.hwx.rx_chat.common.object.rx.types.SettingType;
+import com.hwx.rx_chat.common.response.DialogProfileResponse;
 import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
+import com.hwx.rx_chat_client.repository.DialogRepository;
 import com.hwx.rx_chat_client.rsocket.ChatSocket;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.util.ResourceProvider;
@@ -41,6 +43,7 @@ public class ConversationViewModel extends ViewModel {
     }
 
     private ChatRepository chatRepository;
+    private DialogRepository dialogRepository;
     private ResourceProvider resourceProvider;
     private SharedPreferencesProvider sharedPreferencesProvider;
     private ChatSocket chatSocket;
@@ -64,6 +67,7 @@ public class ConversationViewModel extends ViewModel {
     private PublishSubject<String> psPerformRollbackMessageSwipe = PublishSubject.create();
     private PublishSubject<String> psUserImageClicked = PublishSubject.create();
     private PublishSubject<UserDetailsResponse> psProfileSelectedLoaded = PublishSubject.create();
+    private PublishSubject<DialogProfileResponse> psDialogInfoLoadFinishedAction = PublishSubject.create();
 
 
     private String idDialog;
@@ -76,12 +80,14 @@ public class ConversationViewModel extends ViewModel {
 
     public ConversationViewModel(
               ChatRepository chatRepository
+             , DialogRepository dialogRepository
             , ResourceProvider resourceProvider
             , SharedPreferencesProvider sharedPreferencesProvider
             , ChatSocket chatSocket
             , Picasso picasso) {
 
         this.chatRepository = chatRepository;
+        this.dialogRepository = dialogRepository;
         this.resourceProvider = resourceProvider;
         this.sharedPreferencesProvider = sharedPreferencesProvider;
         this.chatSocket = chatSocket;
@@ -246,6 +252,10 @@ public class ConversationViewModel extends ViewModel {
         return resourceProvider;
     }
 
+    public PublishSubject<DialogProfileResponse> getPsDialogInfoLoadFinishedAction() {
+        return psDialogInfoLoadFinishedAction;
+    }
+
     public void onRefreshMessages() {
 
     }
@@ -256,6 +266,18 @@ public class ConversationViewModel extends ViewModel {
 
     public void setLvEditMessageVisibility(MutableLiveData<Integer> lvEditMessageVisibility) {
         this.lvEditMessageVisibility = lvEditMessageVisibility;
+    }
+
+    public void onClickDialogOptions() {
+        disposables.add(
+            dialogRepository
+                .getDialogInfo(Configuration.URL_DIALOG_PROFILE + "/"+idDialog, headersMap)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(dialogInfo -> {
+                    psDialogInfoLoadFinishedAction.onNext(dialogInfo);
+                }, e-> Log.e("AVX", "err ", e))
+        );
     }
 
     public void onBtnCloseEdit(View view) {

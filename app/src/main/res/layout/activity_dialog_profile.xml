@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="dialogProfileViewModel"
+            type="com.hwx.rx_chat_client.viewModel.conversation.DialogProfileViewModel" />
+
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:padding="10dp"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/image_people"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_gravity="left"
+                tools:imageUrl="@{dialogProfileViewModel.lvImageUrl}"
+                />
+
+            <TextView
+                android:id="@+id/etFirstNameLabel"
+                android:maxLines="1"
+                android:text="Dialog caption:"
+                android:layout_width="250dp"
+                android:layout_marginLeft="110dp"
+                android:layout_height="wrap_content"
+                android:ems="10" />
+
+            <TextView
+                android:id="@+id/etFirstName"
+                android:maxLines="1"
+                android:text="@={dialogProfileViewModel.lvCaption}"
+                android:layout_width="250dp"
+                android:layout_marginLeft="110dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                android:textStyle="bold"
+                android:ems="10" />
+
+            <TextView
+                android:id="@+id/etDialogMembers"
+                android:maxLines="1"
+                android:text="Dialog members:"
+                android:layout_marginTop="115dp"
+                android:layout_marginBottom="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="15dp"
+                android:ems="10" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/light_gray"
+            >
+
+            <android.support.v4.widget.SwipeRefreshLayout
+                android:id="@+id/swiperefresh_items"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:onRefreshListener="@{() -> dialogProfileViewModel.onRefreshDialogMembers()}"
+                app:refreshing="@{dialogProfileViewModel.lvDialogMembersRefreshing}">
+
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/list_members"
+                    android:layout_width="match_parent"
+                    android:layout_height="653dp"
+                    android:background="@color/light_gray"
+                    android:clipToPadding="false"
+                    android:scrollbars="vertical"
+                    app:layout_behavior="android.support.design.widget.AppBarLayout$ScrollingViewBehavior"
+                    app:visibility="@{dialogProfileViewModel.lvDialogMembersVisible}"
+                    tools:listitem="@layout/activity_friend_element" />
+
+            </android.support.v4.widget.SwipeRefreshLayout>
+
+        </RelativeLayout>
+
+    </LinearLayout>
+</layout>

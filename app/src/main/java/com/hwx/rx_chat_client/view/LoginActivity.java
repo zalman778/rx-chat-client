@@ -80,7 +80,10 @@ public class LoginActivity extends AppCompatActivity {
                 editor.putBoolean("logged_in", true);
 
                 //user profile data
-                editor.putString("profileAvatarUrl", Configuration.HTTPS_SERVER_URL + loginResponse.getAvatarUrl());
+                if (loginResponse.getAvatarUrl() != null)
+                    editor.putString("profileAvatarUrl",
+                            Configuration.HTTPS_SERVER_URL +Configuration.IMAGE_PREFIX+ loginResponse.getAvatarUrl()
+                    );
                 editor.putString("profileFirstName", loginResponse.getFirstName());
                 editor.putString("profileLastName", loginResponse.getLastName());
                 editor.putString("profileBio", loginResponse.getBio());

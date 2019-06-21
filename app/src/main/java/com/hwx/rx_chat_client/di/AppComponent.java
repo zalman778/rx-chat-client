@@ -5,6 +5,7 @@ import com.hwx.rx_chat_client.view.HomeActivity;
 import com.hwx.rx_chat_client.view.LoginActivity;
 import com.hwx.rx_chat_client.view.SignupActivity;
 import com.hwx.rx_chat_client.view.dialog.CreateDialogActivity;
+import com.hwx.rx_chat_client.view.dialog.DialogProfileActivity;
 import com.hwx.rx_chat_client.view.friend.AddFriendActivity;
 import com.hwx.rx_chat_client.view.friend.ProfileActivity;
 
@@ -23,4 +24,5 @@ public interface AppComponent {
     void doInjectAddFriendActivity(AddFriendActivity addFriendActivity);
     void doInjectProfileActivity(ProfileActivity profileActivity);
     void doInjectCreateDialogActivity(CreateDialogActivity createDialogActivity);
+    void doInjectDialogProfileActivity(DialogProfileActivity dialogProfileActivity);
 }

@@ -42,7 +42,10 @@ public class MessageViewModel extends ViewModel {
         lvValue.setValue(rxMessage.getValue());
         if (rxMessage.getDateSent() != null)
             lvMessageDate.setValue(new SimpleDateFormat("HH:mm:ss MM.dd").format(rxMessage.getDateSent()));
-        lvMessageUserImage.setValue(Configuration.HTTPS_SERVER_URL+rxMessage.getImageUrl());
+        if (rxMessage.getImageUrl() != null)
+            lvMessageUserImage.setValue(
+                    Configuration.HTTPS_SERVER_URL + Configuration.IMAGE_PREFIX+rxMessage.getImageUrl()
+            );
         fromUserId = rxMessage.getUserFromId();
     }
 

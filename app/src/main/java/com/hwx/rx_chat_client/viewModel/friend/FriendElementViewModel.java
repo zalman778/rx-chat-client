@@ -78,7 +78,10 @@ public class FriendElementViewModel extends ViewModel {
         else
             lvUsername.setValue(friendResponse.getUsername());
 
-        lvImageUrl.setValue(Configuration.HTTPS_SERVER_URL+friendResponse.getImageUrl());
+        if (friendResponse.getImageUrl() != null)
+            lvImageUrl.setValue(
+                    Configuration.HTTPS_SERVER_URL+Configuration.IMAGE_PREFIX+friendResponse.getImageUrl()
+            );
         userId = friendResponse.getUserId();
     }
 

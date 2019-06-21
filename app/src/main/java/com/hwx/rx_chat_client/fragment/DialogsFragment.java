@@ -59,7 +59,8 @@ public class DialogsFragment extends Fragment {
 
 
         dialogElementAdapter = new DialogElementAdapter(
-                homeViewModel.getLvDialogPicked(), getActivity(), homeViewModel.getHeadersMap(), homeViewModel.getChatRepository()
+                  homeViewModel.getLvDialogPicked(), getActivity(), homeViewModel.getHeadersMap()
+                , homeViewModel.getChatRepository(), homeViewModel.getPicasso()
         );
         fragmentMessagesBinding.listMessages.setLayoutManager(new LinearLayoutManager(getActivity()));
         fragmentMessagesBinding.listMessages.setAdapter(dialogElementAdapter);

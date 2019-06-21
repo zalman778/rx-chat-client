@@ -17,7 +17,8 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-        <activity android:name=".view.dialog.CreateDialogActivity"></activity>
+        <activity android:name=".view.dialog.DialogProfileActivity"></activity>
+        <activity android:name=".view.dialog.CreateDialogActivity" />
         <activity android:name=".view.friend.ProfileActivity" />
         <activity android:name=".view.friend.AddFriendActivity" />
         <activity android:name=".view.SignupActivity" />

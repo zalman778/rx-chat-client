@@ -22,6 +22,8 @@ public class Configuration {
 
     public static final String HTTPS_SERVER_URL = "https://"+IP+":8443/";
 
+    public static final String IMAGE_PREFIX = "api/image/";
+
     public static final String URL_LOGIN_REQUEST = HTTPS_SERVER_URL + "api/login";
     public static final String URL_SIGNUP_USER = HTTPS_SERVER_URL + "api/signup";
     public static final String URL_USERS_SEARCH = HTTPS_SERVER_URL + "api/users/search";
@@ -31,6 +33,7 @@ public class Configuration {
     public static final String URL_DIALOGS_LIST = HTTPS_SERVER_URL + "api/dialogs";
     public static final String URL_DIALOGS_FIND_OR_CREATE = HTTPS_SERVER_URL + "api/dialog/find_or_create";
     public static final String URL_DIALOGS_CREATE = HTTPS_SERVER_URL + "api/dialog/create";
+    public static final String URL_DIALOG_PROFILE = HTTPS_SERVER_URL + "api/dialog/info";
 
     public static final String URL_MESSAGES_LIST = HTTPS_SERVER_URL + "api/messages";
 
@@ -57,7 +60,7 @@ public class Configuration {
 
     public static String getIpV4() {
         if (IS_TEST_STANDS) {
-            Log.i("AVX", "build all = "+ Build.FINGERPRINT +"; "+Build.HARDWARE +"; "+Build.HOST+"; "+Build.TAGS+"; "+Build.PRODUCT+": "+Build.DEVICE);
+            //Log.i("AVX", "build all = "+ Build.FINGERPRINT +"; "+Build.HARDWARE +"; "+Build.HOST+"; "+Build.TAGS+"; "+Build.PRODUCT+": "+Build.DEVICE);
 
             return NetworkUtil.getIPAddress(true);
         } else {
