@@ -15,7 +15,6 @@ import com.hwx.rx_chat_client.adapter.FriendElementAdapter;
 import com.hwx.rx_chat_client.databinding.ActivityCreateDialogBinding;
 import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.hwx.rx_chat_client.viewModel.conversation.CreateDialogViewModel;
-import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -101,10 +100,12 @@ public class CreateDialogActivity extends AppCompatActivity {
 
 
         friendElementAdapter = new FriendElementAdapter(
-
-                createDialogViewModel.getPsProfileSelected(), this, createDialogViewModel.getHeadersMap()
-                , createDialogViewModel.getChatRepository(), createDialogViewModel.getPicasso()
-                , activityCreateDialogBinding.listUsers, true
+                  createDialogViewModel.getPsProfileSelected()
+                , createDialogViewModel.getPicasso()
+                , null
+                , null
+                , activityCreateDialogBinding.listUsers
+                , FriendElementAdapter.MODE_USER_PICK
         );
         activityCreateDialogBinding.listUsers.setLayoutManager(new LinearLayoutManager(this));
         activityCreateDialogBinding.listUsers.setAdapter(friendElementAdapter);

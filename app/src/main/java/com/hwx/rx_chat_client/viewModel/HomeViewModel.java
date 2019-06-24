@@ -84,7 +84,6 @@ public class HomeViewModel extends ViewModel {
     //profile fragment
     private PublishSubject<Integer> psProfileLogout = PublishSubject.create();
     private PublishSubject<String> psProfileSelected = PublishSubject.create();
-    private PublishSubject<UserDetailsResponse> psProfileSelectedLoaded = PublishSubject.create();
 
     public MutableLiveData<Drawable> homeTabDrawable = new MutableLiveData<>();
     public MutableLiveData<Drawable> messagesTabDrawable = new MutableLiveData<>();
@@ -113,9 +112,6 @@ public class HomeViewModel extends ViewModel {
     private MutableLiveData<Integer> isFriendsListVisible = new MutableLiveData<>();
     private MutableLiveData<Boolean> isFriendsListLoading = new MutableLiveData<>();
     private MutableLiveData<List<FriendResponse>> lvFriendsList = new MutableLiveData<>();
-
-    private PublishSubject<Integer> psFriendSwippedLeftAction = new PublishSubject<>();
-    private PublishSubject<Integer> psFriendSwippedRightAction = new PublishSubject<>();
 
 
     public HomeViewModel(
@@ -238,20 +234,8 @@ public class HomeViewModel extends ViewModel {
         return psProfileSelected;
     }
 
-    public PublishSubject<UserDetailsResponse> getPsProfileSelectedLoaded() {
-        return psProfileSelectedLoaded;
-    }
-
     public PublishSubject<RxMessage> getPsRecievedRxMessageAction() {
         return psRecievedRxMessageAction;
-    }
-
-    public PublishSubject<Integer> getPsFriendSwippedLeftAction() {
-        return psFriendSwippedLeftAction;
-    }
-
-    public PublishSubject<Integer> getPsFriendSwippedRightAction() {
-        return psFriendSwippedRightAction;
     }
 
     public Picasso getPicasso() {
@@ -305,13 +289,6 @@ public class HomeViewModel extends ViewModel {
     }
 
     private void subscribePublishers() {
-        compositeDisposable.add(
-            psProfileSelected
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::sendProfileInfoRequest
-                    , err->Log.e("AVX", "err", err))
-        );
 
         compositeDisposable.add(
             chatSocket
@@ -334,19 +311,6 @@ public class HomeViewModel extends ViewModel {
                 }, e->Log.e("AVX", "err on rx "+e.getMessage()+"; "+e.getLocalizedMessage(), e))
         );
 
-    }
-
-    private void sendProfileInfoRequest(String profileId) {
-        compositeDisposable.add(
-            chatRepository
-                .getProfileInfo(Configuration.URL_GET_PROFILE_INFO+"/"+profileId, headersMap)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                     profileInfo -> psProfileSelectedLoaded.onNext(profileInfo)
-                    ,err->Log.e("AVX", "err", err)
-                )
-        );
     }
 
 

@@ -72,11 +72,11 @@ public class AddFriendActivity extends AppCompatActivity {
 
         compositeDisposable.add(
                 addFriendViewModel
-                        .getPsProfileSelectedLoaded()
+                        .getPsProfileSelected()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(userInfo->{
-                            startActivity(ProfileActivity.fillDetail(getApplicationContext(), userInfo));
+                        .subscribe(profileId->{
+                            startActivity(ProfileActivity.fillDetail(getApplicationContext(), profileId));
                         }, e-> Log.e("AVX", "error on req", e))
         );
     }
@@ -90,13 +90,13 @@ public class AddFriendActivity extends AppCompatActivity {
     }
 
     private void initRecyclerViewAdapter() {
-        //TODO - change this to another logic!
-        MutableLiveData<DialogListAndIdDialogHolder> lvFriendPicked =new MutableLiveData<>();
-
         friendElementAdapter = new FriendElementAdapter(
-                //TODO - change lvDialog picked!!
-                addFriendViewModel.getPsProfileSelected(), this, addFriendViewModel.getHeadersMap()
-                , addFriendViewModel.getChatRepository(), addFriendViewModel.getPicasso(), activityAddFriendBinding.listUsers, false
+                  addFriendViewModel.getPsProfileSelected()
+                , addFriendViewModel.getPicasso()
+                , null
+                , null
+                , activityAddFriendBinding.listUsers
+                , FriendElementAdapter.MODE_SIMPLE
         );
         activityAddFriendBinding.listUsers.setLayoutManager(new LinearLayoutManager(this));
         activityAddFriendBinding.listUsers.setAdapter(friendElementAdapter);

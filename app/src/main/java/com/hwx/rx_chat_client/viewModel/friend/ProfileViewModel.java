@@ -33,7 +33,7 @@ public class ProfileViewModel extends ViewModel {
     private DialogRepository dialogRepository;
     private FriendRepository friendRepository;
     private String profileId;
-    private String userId;
+    private String selfUserId;
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private Map<String, String> headersMap = new HashMap<>();
@@ -50,6 +50,7 @@ public class ProfileViewModel extends ViewModel {
 
     private MutableLiveData<Integer> lvVisibilitySendFriendRequest = new MutableLiveData<>();
     private MutableLiveData<Integer> lvVisibilityProfileProgress = new MutableLiveData<>();
+    private MutableLiveData<Integer> lvVisibilityOpenDialog = new MutableLiveData<>();
     private MutableLiveData<String> lvProfileRequestResult = new MutableLiveData<>();
 
 
@@ -57,19 +58,45 @@ public class ProfileViewModel extends ViewModel {
               SharedPreferencesProvider sharedPreferencesProvider
             , FriendRepository friendRepository
             , DialogRepository dialogRepository
+            , ChatRepository chatRepository
             , Picasso picasso
     ) {
         this.sharedPreferencesProvider = sharedPreferencesProvider;
         this.friendRepository = friendRepository;
         this.dialogRepository = dialogRepository;
+        this.chatRepository = chatRepository;
         staticPicasso = picasso;
 
         SharedPreferences pref = sharedPreferencesProvider.getSharedPreferences("localPref", 0);
         headersMap.put("Authorization", pref.getString("token", ""));
-        userId = pref.getString("user_id", "");
+        selfUserId = pref.getString("user_id", "");
 
-        lvVisibilitySendFriendRequest.setValue(View.VISIBLE);
+        lvVisibilitySendFriendRequest.setValue(View.GONE);
+        lvVisibilityOpenDialog.setValue(View.GONE);
         lvVisibilityProfileProgress.setValue(View.GONE);
+
+    }
+
+    public void setProfileId(String profileId) {
+
+        if (!selfUserId.equals(profileId))
+            lvVisibilityOpenDialog.setValue(View.VISIBLE);
+
+        lvVisibilityProfileProgress.setValue(View.VISIBLE);
+        Log.w("AVX", "connecting to "+Configuration.URL_GET_PROFILE_INFO+"/"+profileId);
+        compositeDisposable.add(
+                chatRepository
+                        .getProfileInfo(Configuration.URL_GET_PROFILE_INFO+"/"+profileId, headersMap)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                 profileInfo->{
+                                     setUserDetailsResponse(profileInfo);
+                                     lvVisibilityProfileProgress.setValue(View.GONE);
+                                 }
+                                ,err->Log.e("AVX", "err", err)
+                        )
+        );
     }
 
     public void setUserDetailsResponse(UserDetailsResponse userDetailsResponse) {
@@ -82,6 +109,11 @@ public class ProfileViewModel extends ViewModel {
         lvProfileLastname.setValue(userDetailsResponse.getLastname());
         lvProfileUsername.setValue(userDetailsResponse.getUsername());
         lvProfileBio.setValue(userDetailsResponse.getBio());
+
+        if (userDetailsResponse.getAvailableSendFriendRequest())
+            lvVisibilitySendFriendRequest.setValue(View.VISIBLE);
+
+
     }
 
     public MutableLiveData<String> getLvProfileAvatarUrl() {
@@ -92,33 +124,22 @@ public class ProfileViewModel extends ViewModel {
         return lvProfileFirstname;
     }
 
-    public void setLvProfileFirstname(MutableLiveData<String> lvProfileFirstname) {
-        this.lvProfileFirstname = lvProfileFirstname;
-    }
 
     public MutableLiveData<String> getLvProfileLastname() {
         return lvProfileLastname;
     }
 
-    public void setLvProfileLastname(MutableLiveData<String> lvProfileLastname) {
-        this.lvProfileLastname = lvProfileLastname;
-    }
 
     public MutableLiveData<String> getLvProfileUsername() {
         return lvProfileUsername;
     }
 
-    public void setLvProfileUsername(MutableLiveData<String> lvProfileUsername) {
-        this.lvProfileUsername = lvProfileUsername;
-    }
 
     public MutableLiveData<String> getLvProfileBio() {
         return lvProfileBio;
     }
 
-    public void setLvProfileBio(MutableLiveData<String> lvProfileBio) {
-        this.lvProfileBio = lvProfileBio;
-    }
+
 
     public MutableLiveData<Integer> getLvVisibilitySendFriendRequest() {
         return lvVisibilitySendFriendRequest;
@@ -136,6 +157,10 @@ public class ProfileViewModel extends ViewModel {
         return lvProfileRequestResult;
     }
 
+    public MutableLiveData<Integer> getLvVisibilityOpenDialog() {
+        return lvVisibilityOpenDialog;
+    }
+
     // Loading Image using Picasso
     @BindingAdapter("imageUrl")
     public static void setLvProfileAvatarUrl(ImageView imageView, String url){
@@ -148,7 +173,7 @@ public class ProfileViewModel extends ViewModel {
     public void onClickOpenChat() {
         compositeDisposable.add(
             dialogRepository
-                .findOrCreateDialog(Configuration.URL_DIALOGS_FIND_OR_CREATE + "/"+userId+"/"+profileId, headersMap)
+                .findOrCreateDialog(Configuration.URL_DIALOGS_FIND_OR_CREATE + "/"+ selfUserId +"/"+profileId, headersMap)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
@@ -180,4 +205,6 @@ public class ProfileViewModel extends ViewModel {
         super.onCleared();
         compositeDisposable.dispose();
     }
+
+
 }

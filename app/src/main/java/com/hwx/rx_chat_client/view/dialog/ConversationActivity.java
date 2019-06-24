@@ -87,12 +87,11 @@ public class ConversationActivity extends AppCompatActivity {
 
     private void initRecyclerViewAdapter() {
         conversationElementAdapter = new ConversationElementAdapter(
-                this
-                , currentUserName
+                  currentUserName
                 , conversationViewModel.getResourceProvider()
-                , activityConversationBinding
+                , activityConversationBinding.listMessages
                 , conversationViewModel.getPicasso()
-                , conversationViewModel.getPsUserImageClicked()
+                , conversationViewModel.getPsProfileSelectedAction()
         );
 
         linearLayoutManager = new LinearLayoutManager(this);
@@ -231,26 +230,29 @@ public class ConversationActivity extends AppCompatActivity {
                         })
         );
 
+
+
         //событие нажатия на фото пользователя в чате
         compositeDisposable.add(
-                conversationViewModel.getPsProfileSelectedLoaded()
+                conversationViewModel
+                        .getPsProfileSelectedAction()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(userInfo->{
-                            startActivity(ProfileActivity.fillDetail(getApplicationContext(), userInfo));
-                            //adapter check for err...
+                        .subscribe(profileId->{
+                            startActivity(ProfileActivity.fillDetail(getApplicationContext(), profileId));
                         }, e-> Log.e("AVX", "error on req", e))
         );
 
         compositeDisposable.add(
             conversationViewModel
-                    .getPsDialogInfoLoadFinishedAction()
+                    .getPsDialogInfoAction()
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(dialogInfo->{
-                    startActivity(DialogProfileActivity.getIntent(this, dialogInfo));
+                .subscribe(dialogId->{
+                    startActivity(DialogProfileActivity.getIntent(this, dialogId));
                 }, e-> Log.e("AVX", "error ", e))
         );
+
     }
 
     @Override

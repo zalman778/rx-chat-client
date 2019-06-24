@@ -50,6 +50,6 @@ public interface ItemTouchHelperAdapter {
 
     void onItemSwapRight(int adapterPosition);
 
-    //метод проверяет наличие прав у текущего юзера для сообщения
-    boolean checkHasRightToSwipe(int adapterPosition);
+    //метод возвращает возможные флаги свайпов
+    int getSwipeFlags(int adapterPosition);
 }

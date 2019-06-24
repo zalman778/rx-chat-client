@@ -65,14 +65,11 @@ public class FriendsFragment extends Fragment {
 
         friendElementAdapter = new FriendElementAdapter(
                   homeViewModel.getPsProfileSelected()
-//                , homeViewModel.getPsFriendSwippedLeftAction()
-//                , homeViewModel.getPsFriendSwippedRightAction()
-                , getActivity()
-                , homeViewModel.getHeadersMap()
-                , homeViewModel.getChatRepository()
                 , homeViewModel.getPicasso()
+                , null
+                , null
                 , fragmentFriendsBinding.listFriends
-                , false
+                , FriendElementAdapter.MODE_FRIEND_REQUESTS
         );
         fragmentFriendsBinding.listFriends.setLayoutManager(new LinearLayoutManager(getActivity()));
         fragmentFriendsBinding.listFriends.setAdapter(friendElementAdapter);
@@ -123,7 +120,7 @@ public class FriendsFragment extends Fragment {
     private void subscribePublishers() {
         compositeDisposable.add(
                 friendElementAdapter
-                        .getPsFriendRequestAccept()
+                        .getPsItemSwipeRightAction()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(adapterPosition->{
@@ -141,7 +138,7 @@ public class FriendsFragment extends Fragment {
                                             })
                                     .setNegativeButton(android.R.string.no,
                                             (dialog, whichButton) ->
-                                                    friendElementAdapter.performRollbackFriendRequest(adapterPosition)
+                                                    friendElementAdapter.performRollbackSwipeRight(adapterPosition)
                                     )
                                     .show();
 
@@ -150,7 +147,7 @@ public class FriendsFragment extends Fragment {
 
         compositeDisposable.add(
                 friendElementAdapter
-                        .getPsFriendRequestReject()
+                        .getPsItemSwipeLeftAction()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(adapterPosition->{
@@ -168,7 +165,7 @@ public class FriendsFragment extends Fragment {
                                             })
                                     .setNegativeButton(android.R.string.no,
                                             (dialog, whichButton) ->
-                                                    friendElementAdapter.performRollbackFriendRequest(adapterPosition)
+                                                    friendElementAdapter.performRollbackSwipeRight(adapterPosition)
                                     )
                                     .show();
 
@@ -177,12 +174,11 @@ public class FriendsFragment extends Fragment {
         );
 
         compositeDisposable.add(
-                homeViewModel.getPsProfileSelectedLoaded()
+                homeViewModel.getPsProfileSelected()
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(userInfo->{
-                            startActivity(ProfileActivity.fillDetail(getContext(), userInfo));
-                            //adapter check for err...
+                        .subscribe(profileId->{
+                            startActivity(ProfileActivity.fillDetail(getContext(), profileId));
                         }, e-> Log.e("AVX", "error on req", e))
         );
     }

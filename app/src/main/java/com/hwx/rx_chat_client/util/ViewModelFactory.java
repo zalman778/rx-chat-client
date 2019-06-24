@@ -74,7 +74,7 @@ public class ViewModelFactory implements ViewModelProvider.Factory {
             return (T) new AddFriendViewModel(friendRepository, chatRepository, sharedPreferencesProvider, picasso);
         }
         if (modelClass.isAssignableFrom(ProfileViewModel.class)) {
-            return (T) new ProfileViewModel(sharedPreferencesProvider, friendRepository, dialogRepository, picasso);
+            return (T) new ProfileViewModel(sharedPreferencesProvider, friendRepository, dialogRepository,  chatRepository, picasso);
         }
 
         if (modelClass.isAssignableFrom(CreateDialogViewModel.class)) {

@@ -65,12 +65,8 @@ public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
             final int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN | ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT;
             final int swipeFlags = 0;
             return makeMovementFlags(dragFlags, swipeFlags);
-        } else if (mAdapter.checkHasRightToSwipe(viewHolder.getAdapterPosition())) {
-            //final int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
-            final int swipeFlags = ItemTouchHelper.START | ItemTouchHelper.END;
-            return makeMovementFlags(0, swipeFlags);
         } else
-            return makeMovementFlags(0, 0);
+            return makeMovementFlags(0, mAdapter.getSwipeFlags(viewHolder.getAdapterPosition()));
     }
 
     @Override
@@ -107,8 +103,10 @@ public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
         }
 
         //returning back background, if swipe cancelled
-        if (dX == 0.0f && !isCurrentlyActive)
-            viewHolder.itemView.setBackgroundResource(R.color.transparent);
+        if (dX == 0.0f && !isCurrentlyActive) {
+            viewHolder.itemView.setBackgroundResource(R.color.grey_500);
+            viewHolder.itemView.setAlpha(1f);
+        }
         else
             mAdapter.onItemSwipping(viewHolder.getAdapterPosition(), direction);
 

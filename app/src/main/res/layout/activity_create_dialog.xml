@@ -26,7 +26,7 @@
                 android:inputType="textLongMessage"
                 android:maxLines="1"
                 android:text="@={createDialogViewModel.lvDialogCaption}"
-                android:hint="searching name"
+                android:hint="new dialog name"
                 android:layout_width="300dp"
 
                 android:layout_height="wrap_content"

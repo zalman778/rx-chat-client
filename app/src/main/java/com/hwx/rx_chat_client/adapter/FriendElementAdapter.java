@@ -1,10 +1,10 @@
 package com.hwx.rx_chat_client.adapter;
 
 import android.arch.lifecycle.LifecycleOwner;
-import android.arch.lifecycle.MutableLiveData;
 import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -15,7 +15,6 @@ import com.hwx.rx_chat_client.adapter.misc.ItemTouchHelperAdapter;
 import com.hwx.rx_chat_client.databinding.ActivityFriendElementBinding;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.viewModel.friend.FriendElementViewModel;
-import com.hwx.rx_chat_client.viewModel.misc.DialogListAndIdDialogHolder;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -29,52 +28,64 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 
+/*
+    Адаптер списка пользователей.
+
+ */
 public class FriendElementAdapter
         extends RecyclerView.Adapter<FriendElementAdapter.FriendElementViewHolder>
         implements ItemTouchHelperAdapter {
 
+    public static final int MODE_SIMPLE = 0;    //обычный список юзеров
+    public static final int MODE_FRIEND_REQUESTS = 1; //режим списка запросов в друзья
+    public static final int MODE_DIALOG_USERS = 2; //режим списка пользователей диалога
+    public static final int MODE_USER_PICK = 3; //режим выбора пользователя из списка
+
+    private int currentMode;
+
+    //2:
+    private StringBuilder currentUserId;
+    private StringBuilder dialogCreatorId;
+
+
 
     private List<FriendResponse> friendList = new ArrayList<>();
-    private LifecycleOwner lifecycleOwner;
-    private MutableLiveData<DialogListAndIdDialogHolder> lvDialogPicked;
+
+
     private PublishSubject<String> psProfileSelected;
-    private Map<String, String> headersMap;
-    private ChatRepository chatRepository;
     private Picasso picasso;
-    private boolean isMultiselectMode;
+    private RecyclerView recyclerView;
 
-    private RecyclerView recyclerViewlistUsers;
-
-    private PublishSubject<Integer> psFriendRequestReject = PublishSubject.create();
-    private PublishSubject<Integer> psFriendRequestAccept = PublishSubject.create();
+    private PublishSubject<Integer> psItemSwipeLeftAction = PublishSubject.create();
+    private PublishSubject<Integer> psItemSwipeRightAction = PublishSubject.create();
     private PublishSubject<String> psProfilePicked = PublishSubject.create();
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-//    private PublishSubject<Integer> psItemSwipedLeftAction;
-//    private PublishSubject<Integer> psItemSwipedRightAction;
+
+
+
 
     //key - dialogId
     private Map<String, FriendElementViewModel> viewModelsMap = new HashMap<>();
 
     public FriendElementAdapter(
               PublishSubject<String> psProfileSelected
-            , LifecycleOwner lifecycleOwner
-            , Map<String, String> headersMap
-            , ChatRepository chatRepository
             , Picasso picasso
-            , RecyclerView recyclerViewlistUsers
-            , boolean isMultiselectMode
+            , StringBuilder dialogCreatorId
+            , StringBuilder currentUserId
+            , RecyclerView recyclerView
+            , int currentMode
     ) {
-        this.lifecycleOwner = lifecycleOwner;
         this.psProfileSelected = psProfileSelected;
-//        this.psItemSwipedLeftAction = psItemSwipedLeftAction;
-//        this.psItemSwipedRightAction = psItemSwipedRightAction;
-        this.headersMap = headersMap;
-        this.chatRepository = chatRepository;
         this.picasso = picasso;
-        this.recyclerViewlistUsers = recyclerViewlistUsers;
-        this.isMultiselectMode = isMultiselectMode;
+        this.recyclerView = recyclerView;
+        this.currentMode = currentMode;
+        if (currentMode == MODE_DIALOG_USERS) {
+            this.currentUserId = currentUserId;
+            this.dialogCreatorId = dialogCreatorId;
+            Log.w("AVX", "current userID="+currentUserId);
+        }
         subscribePublishers();
     }
 
@@ -91,8 +102,8 @@ public class FriendElementAdapter
     }
 
     private void subscribePublishers() {
-        Log.w("AVX", "isMultiselectMode = "+isMultiselectMode);
-        if (isMultiselectMode) {
+
+        if (currentMode == MODE_USER_PICK) {
             compositeDisposable.add(
                     psProfilePicked
                             .subscribeOn(Schedulers.io())
@@ -101,9 +112,9 @@ public class FriendElementAdapter
                                         Integer pos = getAdapterPositionByKey(profileId);
                                         if (pos != null) {
                                             if (viewModelsMap.get(profileId).isPicked())
-                                                recyclerViewlistUsers.findViewHolderForAdapterPosition(pos).itemView.setBackgroundResource(R.color.light_gray);
+                                                recyclerView.findViewHolderForAdapterPosition(pos).itemView.setBackgroundResource(R.color.light_gray);
                                             else
-                                                recyclerViewlistUsers.findViewHolderForAdapterPosition(pos).itemView.setBackgroundResource(R.color.white);
+                                                recyclerView.findViewHolderForAdapterPosition(pos).itemView.setBackgroundResource(R.color.white);
                                         }
                                     }, err -> Log.e("AVX", "err", err)
                             )
@@ -116,27 +127,17 @@ public class FriendElementAdapter
         notifyDataSetChanged();
     }
 
-    //avx: test method:
-    public void addFriend(FriendResponse friendResponse) {
-        this.friendList.add(friendResponse);
-        //notifyDataSetChanged();
-        notifyItemInserted(this.friendList.size());
-    }
-
     public FriendResponse getFriendReponseByAdapterPosition(Integer adapterPosition) {
         return friendList.get(adapterPosition);
     }
 
-    public Map<String, FriendElementViewModel> getViewModelsMap() {
-        return viewModelsMap;
+
+    public PublishSubject<Integer> getPsItemSwipeLeftAction() {
+        return psItemSwipeLeftAction;
     }
 
-    public PublishSubject<Integer> getPsFriendRequestReject() {
-        return psFriendRequestReject;
-    }
-
-    public PublishSubject<Integer> getPsFriendRequestAccept() {
-        return psFriendRequestAccept;
+    public PublishSubject<Integer> getPsItemSwipeRightAction() {
+        return psItemSwipeRightAction;
     }
 
     @NonNull
@@ -153,7 +154,11 @@ public class FriendElementAdapter
         String userId = friendList.get(i).getUserId();
 
         if (viewModelsMap.get(userId) == null) {
-            FriendElementViewModel friendElementViewModel = new FriendElementViewModel(friendList.get(i), psProfileSelected, psProfilePicked, picasso, isMultiselectMode);
+            FriendElementViewModel friendElementViewModel =
+                    new FriendElementViewModel(friendList.get(i), psProfileSelected
+                            , psProfilePicked, picasso
+                            , currentMode == FriendElementAdapter.MODE_USER_PICK
+                    );
             viewModelsMap.put(userId, friendElementViewModel);
         }
         friendElementViewHolder.bindFriendElement(friendList.get(i), viewModelsMap.get(userId));
@@ -174,8 +179,8 @@ public class FriendElementAdapter
         //? wait for rx?
     }
 
-    public void performRollbackFriendRequest(int adapterPosition) {
-        RecyclerView.ViewHolder viewHolder = recyclerViewlistUsers.findViewHolderForAdapterPosition(adapterPosition);
+    public void performRollbackSwipeRight(int adapterPosition) {
+        RecyclerView.ViewHolder viewHolder = recyclerView.findViewHolderForAdapterPosition(adapterPosition);
 
         viewHolder.itemView.setTranslationX(0);
         viewHolder.itemView.setAlpha(1f);
@@ -200,38 +205,66 @@ public class FriendElementAdapter
              activityFriendElementBinding.getFriendElementViewModel().setFriendResponse(friendResponse);
         }
     }
-    //swiping
 
+    //swiping
     @Override
     public boolean onItemMove(int fromPosition, int toPosition) {
         return false;
     }
 
 
-
+    //определение цвета
     @Override
     public void onItemSwipping(int adapterPosition, Boolean direction) {
-        //TODO change background color...
+        if (currentMode == MODE_DIALOG_USERS) {
+
+            RecyclerView.ViewHolder viewHolder =
+                    recyclerView.findViewHolderForAdapterPosition(adapterPosition);
+            if (!direction)
+                viewHolder.itemView.setBackgroundResource(R.color.red);
+
+        }
+
+        if (currentMode == MODE_FRIEND_REQUESTS) {
+            RecyclerView.ViewHolder viewHolder =
+                    recyclerView.findViewHolderForAdapterPosition(adapterPosition);
+            if (direction)
+                viewHolder.itemView.setBackgroundResource(R.color.green);
+            else
+                viewHolder.itemView.setBackgroundResource(R.color.red);
+        }
     }
 
     //dismiss friend request
     @Override
     public void onItemSwipeLeft(int adapterPosition) {
-//        psItemSwipedLeftAction.onNext(adapterPosition);
-        psFriendRequestReject.onNext(adapterPosition);
+        psItemSwipeLeftAction.onNext(adapterPosition);
 
     }
 
     //accept friend request
     @Override
     public void onItemSwapRight(int adapterPosition) {
-//        psItemSwipedRightAction.onNext(adapterPosition);
-        psFriendRequestAccept.onNext(adapterPosition);
+        psItemSwipeRightAction.onNext(adapterPosition);
     }
 
+     /*
+        Проверяем на возможность свайпа:
+        Свайп может быть в 2ух случаях:
+        1) в списке друзей - свайп на принятие/отказ от заявки в друщья
+        2) в списке участников диалога - свайп на удаление
+     */
+
     @Override
-    public boolean checkHasRightToSwipe(int adapterPosition) {
-        Log.w("AVX", "checking for acceptance of swipe:"+friendList.get(adapterPosition).getAccepted());
-        return !friendList.get(adapterPosition).getAccepted();
+    public int getSwipeFlags(int adapterPosition) {
+        if (currentMode == MODE_FRIEND_REQUESTS)
+            if (friendList.get(adapterPosition).getAccepted() != null && !friendList.get(adapterPosition).getAccepted())
+                return ItemTouchHelper.START | ItemTouchHelper.END;
+        if (currentMode == MODE_DIALOG_USERS)
+            if (!currentUserId.toString().equals(friendList.get(adapterPosition).getUserId())
+                    && currentUserId.toString().equals(dialogCreatorId.toString())
+            )
+                return ItemTouchHelper.END;
+        return 0;
     }
 }

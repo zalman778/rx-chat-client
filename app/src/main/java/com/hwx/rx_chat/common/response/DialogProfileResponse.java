@@ -26,6 +26,10 @@ public class DialogProfileResponse implements Serializable {
     @JsonProperty("friend_list")
     private List<FriendResponse> friendList = new ArrayList<>();
 
+    @SerializedName("creator_id")
+    @JsonProperty("creator_id")
+    private String creatorId;
+
     public String getDialogId() {
         return dialogId;
     }
@@ -58,6 +62,14 @@ public class DialogProfileResponse implements Serializable {
         this.friendList = friendList;
     }
 
+    public String getCreatorId() {
+        return creatorId;
+    }
+
+    public void setCreatorId(String creatorId) {
+        this.creatorId = creatorId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -66,11 +78,12 @@ public class DialogProfileResponse implements Serializable {
         return Objects.equals(dialogId, that.dialogId) &&
                 Objects.equals(dialogName, that.dialogName) &&
                 Objects.equals(chatImage, that.chatImage) &&
-                Objects.equals(friendList, that.friendList);
+                Objects.equals(friendList, that.friendList) &&
+                Objects.equals(creatorId, that.creatorId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dialogId, dialogName, chatImage, friendList);
+        return Objects.hash(dialogId, dialogName, chatImage, friendList, creatorId);
     }
 }

@@ -5,14 +5,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 
-import com.hwx.rx_chat.common.response.DialogProfileResponse;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.RxChatApplication;
 import com.hwx.rx_chat_client.adapter.FriendElementAdapter;
+import com.hwx.rx_chat_client.adapter.misc.ItemTouchHelperCallback;
 import com.hwx.rx_chat_client.databinding.ActivityDialogProfileBinding;
 import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.hwx.rx_chat_client.view.friend.ProfileActivity;
@@ -25,7 +27,7 @@ import io.reactivex.disposables.CompositeDisposable;
 
 public class DialogProfileActivity extends AppCompatActivity {
 
-    private static final String EXTRA_DIALOG_INFO = "EXTRA_DIALOG_INFO";
+    private static final String EXTRA_DIALOG_ID = "EXTRA_DIALOG_ID";
     @Inject
     ViewModelFactory viewModelFactory;
 
@@ -34,13 +36,14 @@ public class DialogProfileActivity extends AppCompatActivity {
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private FriendElementAdapter friendElementAdapter;
+    private ItemTouchHelper mItemTouchHelper;
+
+    private StringBuilder currentUserId = new StringBuilder();
+    private String dialogId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
-
 
 
         ((RxChatApplication) getApplication()).getAppComponent().doInjectDialogProfileActivity(this);
@@ -51,14 +54,11 @@ public class DialogProfileActivity extends AppCompatActivity {
 
         subscribePublishers();
 
-        //recieving extra data
-        DialogProfileResponse dialogProfileResponse = (DialogProfileResponse) getIntent().getSerializableExtra(EXTRA_DIALOG_INFO);
-        dialogProfileViewModel.setDialogResponse(dialogProfileResponse);
-        friendElementAdapter.setFriendList(dialogProfileResponse.getFriendList());
+        dialogId = getIntent().getStringExtra(EXTRA_DIALOG_ID);
+        dialogProfileViewModel.setDialogId(dialogId);
+
+        currentUserId.append(getApplicationContext().getSharedPreferences("localPref", 0).getString("user_id", ""));
     }
-
-
-
 
 
     private void initDataBinding() {
@@ -70,29 +70,68 @@ public class DialogProfileActivity extends AppCompatActivity {
 
     private void initRecyclerViewAdapter() {
         friendElementAdapter = new FriendElementAdapter(
-
-                dialogProfileViewModel.getPsProfileSelected(), this, null
-                , null, dialogProfileViewModel.getPicasso()
-                , activityDialogProfileBinding.listMembers, false
+                  dialogProfileViewModel.getPsProfileSelected()
+                , dialogProfileViewModel.getPicasso()
+                , dialogProfileViewModel.getCreatorId()
+                , currentUserId
+                , activityDialogProfileBinding.listMembers
+                , FriendElementAdapter.MODE_DIALOG_USERS
         );
         activityDialogProfileBinding.listMembers.setLayoutManager(new LinearLayoutManager(this));
         activityDialogProfileBinding.listMembers.setAdapter(friendElementAdapter);
+
+        ItemTouchHelper.Callback callback = new ItemTouchHelperCallback(friendElementAdapter);
+        mItemTouchHelper = new ItemTouchHelper(callback);
+        mItemTouchHelper.attachToRecyclerView(activityDialogProfileBinding.listMembers);
     }
 
     private void subscribePublishers() {
         compositeDisposable.add(
                 dialogProfileViewModel
-                        .getPsProfileSelecedLoadedAction()
+                        .getPsProfileSelected()
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(userInfo->{
-                            startActivity(ProfileActivity.fillDetail(getApplicationContext(), userInfo));
+                        .subscribe(profileId-> startActivity(ProfileActivity.fillDetail(getApplicationContext()
+                                , profileId)), e-> Log.e("AVX", "error on req", e))
+        );
+
+        compositeDisposable.add(
+                dialogProfileViewModel
+                        .getPsDialogMembersLoadedAction()
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(membersList-> friendElementAdapter.setFriendList(membersList)
+                                , e-> Log.e("AVX", "error on req", e))
+        );
+
+        compositeDisposable.add(
+                friendElementAdapter
+                    .getPsItemSwipeRightAction()
+                    .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(adapterPosition->{
+                            new AlertDialog.Builder(this)
+                                    .setTitle("Dialog member deleting")
+                                    .setMessage("Do you really want to delete  \""+
+                                            friendElementAdapter.getFriendReponseByAdapterPosition(adapterPosition).getUsername()+"\" from this dialog ?")
+                                    .setIcon(android.R.drawable.ic_dialog_alert)
+                                    .setPositiveButton(android.R.string.yes,
+                                            (dialog, whichButton) -> {
+                                                dialogProfileViewModel.sendDialogMemberDeletion(
+                                                          friendElementAdapter.getFriendReponseByAdapterPosition(adapterPosition).getUserId()
+                                                        , dialogId
+                                                );
+                                            })
+                                    .setNegativeButton(android.R.string.no,
+                                            (dialog, whichButton) ->
+                                                friendElementAdapter.performRollbackSwipeRight(adapterPosition)
+                                    )
+                                    .show();
+
                         }, e-> Log.e("AVX", "error on req", e))
         );
     }
 
-    public static Intent getIntent(Context context, DialogProfileResponse dialogProfileResponse) {
+    public static Intent getIntent(Context context, String dialogId) {
         Intent intent = new Intent(context, DialogProfileActivity.class);
-        intent.putExtra(EXTRA_DIALOG_INFO, dialogProfileResponse);
+        intent.putExtra(EXTRA_DIALOG_ID, dialogId);
         return intent;
     }
 

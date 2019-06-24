@@ -8,7 +8,7 @@ import android.util.Log;
 import android.widget.ImageView;
 
 import com.hwx.rx_chat.common.response.DialogProfileResponse;
-import com.hwx.rx_chat.common.response.UserDetailsResponse;
+import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.repository.DialogRepository;
@@ -16,6 +16,7 @@ import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -24,6 +25,9 @@ import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 
 public class DialogProfileViewModel extends ViewModel {
+
+    //sb because this value is recieving async
+    private StringBuilder creatorId = new StringBuilder();
 
     private DialogRepository dialogRepository;
     private ChatRepository chatRepository;
@@ -39,7 +43,7 @@ public class DialogProfileViewModel extends ViewModel {
     private MutableLiveData<Integer> lvDialogMembersVisible = new MutableLiveData<>();
 
     private PublishSubject<String> psProfileSelected = PublishSubject.create();
-    private PublishSubject<UserDetailsResponse> psProfileSelecedLoadedAction = PublishSubject.create();
+    private PublishSubject<List<FriendResponse>> psDialogMembersLoadedAction = PublishSubject.create();
 
     public DialogProfileViewModel(
               DialogRepository dialogRepository
@@ -59,33 +63,15 @@ public class DialogProfileViewModel extends ViewModel {
     }
 
     private void subscribePublishers() {
-        //profile was picked, requesting profile info and sending it to new activity:
-        compositeDisposable.add(
-                psProfileSelected
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(this::sendProfileInfoRequest
-                                , err-> Log.e("AVX", "err", err))
-        );
     }
 
-    private void sendProfileInfoRequest(String profileId) {
-        compositeDisposable.add(
-                chatRepository
-                        .getProfileInfo(Configuration.URL_GET_PROFILE_INFO+"/"+profileId, headersMap)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                profileInfo -> psProfileSelecedLoadedAction.onNext(profileInfo)
-                                ,err->Log.e("AVX", "err", err)
-                        )
-        );
-    }
+
 
     public void setDialogResponse(DialogProfileResponse dialogProfileResponse) {
+        creatorId.append(dialogProfileResponse.getCreatorId());
         lvImageUrl.setValue(Configuration.HTTPS_SERVER_URL+Configuration.IMAGE_PREFIX+dialogProfileResponse.getChatImage());
         lvCaption.setValue(dialogProfileResponse.getDialogName());
-
+        psDialogMembersLoadedAction.onNext(dialogProfileResponse.getFriendList());
     }
 
     public DialogRepository getDialogRepository() {
@@ -124,8 +110,12 @@ public class DialogProfileViewModel extends ViewModel {
         return psProfileSelected;
     }
 
-    public PublishSubject<UserDetailsResponse> getPsProfileSelecedLoadedAction() {
-        return psProfileSelecedLoadedAction;
+    public PublishSubject<List<FriendResponse>> getPsDialogMembersLoadedAction() {
+        return psDialogMembersLoadedAction;
+    }
+
+    public StringBuilder getCreatorId() {
+        return creatorId;
     }
 
     // Loading Image using Picasso
@@ -133,8 +123,8 @@ public class DialogProfileViewModel extends ViewModel {
     public static void setLvProfileAvatarUrl(ImageView imageView, String url){
         if (url != null)
             staticPicasso
-                    .load(url)
-                    .into(imageView);
+                .load(url)
+                .into(imageView);
     }
 
     public void onRefreshDialogMembers() {
@@ -142,5 +132,26 @@ public class DialogProfileViewModel extends ViewModel {
     }
 
 
+    public void setDialogId(String dialogId) {
+        compositeDisposable.add(
+                dialogRepository
+                    .getDialogInfo(Configuration.URL_DIALOG_PROFILE + "/"+dialogId, headersMap)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(this::setDialogResponse, e-> Log.e("AVX", "err ", e))
+        );
+    }
 
+    //запрос на удаление пользователя из диалога
+    public void sendDialogMemberDeletion(String userId, String dialogId) {
+        compositeDisposable.add(
+            dialogRepository
+                .deleteDialogMember(Configuration.URL_DIALOGS_DELETE_MEMBER+"/"+dialogId+"/"+userId, headersMap)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(e->{}
+                , e-> Log.e("AVX", "err ", e))
+
+        );
+    }
 }

@@ -33,7 +33,6 @@ public class AddFriendViewModel extends ViewModel {
     private MutableLiveData<String> lvSeachUsername = new MutableLiveData<>();
     private PublishSubject<List<FriendResponse>> psRecievedFriendResponseList = PublishSubject.create();
     private PublishSubject<String> psProfileSelected = PublishSubject.create();
-    private PublishSubject<UserDetailsResponse> psProfileSelectedLoaded = PublishSubject.create();
     private MutableLiveData<Integer> lvUserListVisibility = new MutableLiveData<>();
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
@@ -50,34 +49,9 @@ public class AddFriendViewModel extends ViewModel {
 
         SharedPreferences pref = sharedPreferencesProvider.getSharedPreferences("localPref", 0);
         headersMap.put("Authorization", pref.getString("token", ""));
-
-
-        //profile was picked, requesting profile info and sending it to new activity:
-        compositeDisposable.add(
-            psProfileSelected
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(this::sendProfileInfoRequest
-                            , err->Log.e("AVX", "err", err))
-        );
     }
 
-    private void sendProfileInfoRequest(String profileId) {
-        compositeDisposable.add(
-                chatRepository
-                        .getProfileInfo(Configuration.URL_GET_PROFILE_INFO+"/"+profileId, headersMap)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                profileInfo -> psProfileSelectedLoaded.onNext(profileInfo)
-                                ,err->Log.e("AVX", "err", err)
-                        )
-        );
-    }
 
-    public PublishSubject<UserDetailsResponse> getPsProfileSelectedLoaded() {
-        return psProfileSelectedLoaded;
-    }
 
     public MutableLiveData<String> getLvSeachUsername() {
         return lvSeachUsername;

@@ -35,4 +35,10 @@ public interface DialogService {
               @Url String url
             , @HeaderMap Map<String, String> headers
     );
+
+    @GET
+    Observable<DefaultResponse> deleteDialogMember(
+              @Url String url
+            , @HeaderMap Map<String, String> headers
+    );
 }

@@ -113,6 +113,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="Open chat"
+            android:visibility="@{profileViewModel.lvVisibilityOpenDialog}"
             android:onClick="@{(v) -> profileViewModel.onClickOpenChat()}"
             />
 

@@ -27,4 +27,8 @@ public class DialogRepository {
     public Observable<DialogProfileResponse> getDialogInfo(String url,  Map<String, String> headersMap) {
         return dialogService.getDialogInfo(url, headersMap);
     }
+
+    public Observable<DefaultResponse> deleteDialogMember(String url,  Map<String, String> headersMap) {
+        return dialogService.deleteDialogMember(url, headersMap);
+    }
 }

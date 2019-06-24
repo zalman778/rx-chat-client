@@ -22,16 +22,21 @@ public class UserDetailsResponse implements Serializable {
 
     private String bio;
 
+    @SerializedName("is_available_send_friend_request")
+    @JsonProperty("is_available_send_friend_request")
+    private Boolean isAvailableSendFriendRequest;
+
     public UserDetailsResponse() {
     }
 
-    public UserDetailsResponse(String id, String imageUrl, String firstname, String lastname, String username, String bio) {
+    public UserDetailsResponse(String id, String imageUrl, String firstname, String lastname, String username, String bio, Boolean isAvailableSendFriendRequest) {
         this.id = id;
         this.imageUrl = imageUrl;
         this.firstname = firstname;
         this.lastname = lastname;
         this.username = username;
         this.bio = bio;
+        this.isAvailableSendFriendRequest = isAvailableSendFriendRequest;
     }
 
     public String getId() {
@@ -82,6 +87,14 @@ public class UserDetailsResponse implements Serializable {
         this.bio = bio;
     }
 
+    public Boolean getAvailableSendFriendRequest() {
+        return isAvailableSendFriendRequest;
+    }
+
+    public void setAvailableSendFriendRequest(Boolean availableSendFriendRequest) {
+        isAvailableSendFriendRequest = availableSendFriendRequest;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -92,12 +105,13 @@ public class UserDetailsResponse implements Serializable {
                 Objects.equals(firstname, that.firstname) &&
                 Objects.equals(lastname, that.lastname) &&
                 Objects.equals(username, that.username) &&
-                Objects.equals(bio, that.bio);
+                Objects.equals(bio, that.bio) &&
+                Objects.equals(isAvailableSendFriendRequest, that.isAvailableSendFriendRequest);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, imageUrl, firstname, lastname, username, bio);
+        return Objects.hash(id, imageUrl, firstname, lastname, username, bio, isAvailableSendFriendRequest);
     }
 
     @Override
@@ -109,6 +123,7 @@ public class UserDetailsResponse implements Serializable {
                 ", lastname='" + lastname + '\'' +
                 ", username='" + username + '\'' +
                 ", bio='" + bio + '\'' +
+                ", isAvailableSendFriendRequest=" + isAvailableSendFriendRequest +
                 '}';
     }
 }

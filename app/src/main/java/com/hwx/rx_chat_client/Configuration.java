@@ -1,8 +1,5 @@
 package com.hwx.rx_chat_client;
 
-import android.os.Build;
-import android.util.Log;
-
 import com.hwx.rx_chat_client.util.NetworkUtil;
 
 public class Configuration {
@@ -32,8 +29,10 @@ public class Configuration {
 
     public static final String URL_DIALOGS_LIST = HTTPS_SERVER_URL + "api/dialogs";
     public static final String URL_DIALOGS_FIND_OR_CREATE = HTTPS_SERVER_URL + "api/dialog/find_or_create";
+    public static final String URL_DIALOGS_DELETE_MEMBER = HTTPS_SERVER_URL + "api/dialog/delete_member";
     public static final String URL_DIALOGS_CREATE = HTTPS_SERVER_URL + "api/dialog/create";
     public static final String URL_DIALOG_PROFILE = HTTPS_SERVER_URL + "api/dialog/info";
+
 
     public static final String URL_MESSAGES_LIST = HTTPS_SERVER_URL + "api/messages";
 

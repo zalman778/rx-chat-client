@@ -35,7 +35,7 @@ import io.reactivex.schedulers.Schedulers;
 public class ProfileActivity extends AppCompatActivity {
 
 
-    private static final String EXTRA_USER_PROFILE_DETAILS = "EXTRA_USER_PROFILE_DETAILS";
+    private static final String EXTRA_PROFILE_ID = "EXTRA_PROFILE_ID";
 
     @Inject
     ViewModelFactory viewModelFactory;
@@ -52,8 +52,8 @@ public class ProfileActivity extends AppCompatActivity {
         ((RxChatApplication) getApplication()).getAppComponent().doInjectProfileActivity(this);
         initDataBinding();
 
-        UserDetailsResponse userDetailsResponse = (UserDetailsResponse) getIntent().getSerializableExtra(EXTRA_USER_PROFILE_DETAILS);
-        profileViewModel.setUserDetailsResponse(userDetailsResponse);
+        String profileId = getIntent().getStringExtra(EXTRA_PROFILE_ID);
+        profileViewModel.setProfileId(profileId);
 
         subscribePublishers();
     }
@@ -78,9 +78,9 @@ public class ProfileActivity extends AppCompatActivity {
 
 
 
-    public static Intent fillDetail(Context context, UserDetailsResponse userDetailsResponse) {
+    public static Intent fillDetail(Context context, String profileId) {
         Intent intent = new Intent(context, ProfileActivity.class);
-        intent.putExtra(EXTRA_USER_PROFILE_DETAILS, userDetailsResponse);
+        intent.putExtra(EXTRA_PROFILE_ID, profileId);
         return intent;
     }
 

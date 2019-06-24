@@ -13,11 +13,10 @@ import com.hwx.rx_chat.common.object.rx.types.EventType;
 import com.hwx.rx_chat.common.object.rx.types.ObjectType;
 import com.hwx.rx_chat.common.object.rx.types.SettingType;
 import com.hwx.rx_chat.common.response.DialogProfileResponse;
-import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
+import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.repository.DialogRepository;
 import com.hwx.rx_chat_client.rsocket.ChatSocket;
-import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 import com.squareup.picasso.Picasso;
@@ -65,9 +64,8 @@ public class ConversationViewModel extends ViewModel {
     private PublishSubject<RxObject> psRxMessage = PublishSubject.create();
     private PublishSubject<List<RxMessage>> psRxMessagesList = PublishSubject.create();
     private PublishSubject<String> psPerformRollbackMessageSwipe = PublishSubject.create();
-    private PublishSubject<String> psUserImageClicked = PublishSubject.create();
-    private PublishSubject<UserDetailsResponse> psProfileSelectedLoaded = PublishSubject.create();
-    private PublishSubject<DialogProfileResponse> psDialogInfoLoadFinishedAction = PublishSubject.create();
+    private PublishSubject<String> psProfileSelectedAction = PublishSubject.create();
+    private PublishSubject<String> psDialogInfoAction = PublishSubject.create();
 
 
     private String idDialog;
@@ -124,26 +122,6 @@ public class ConversationViewModel extends ViewModel {
                                 e->Log.e("AVX", "err on rx "+e.getMessage()+"; "+e.getLocalizedMessage(), e))
         );
 
-        disposables.add(
-            psUserImageClicked
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(this::sendProfileInfoRequest
-                            , err->Log.e("AVX", "err", err))
-        );
-    }
-
-    private void sendProfileInfoRequest(String profileId) {
-        disposables.add(
-                chatRepository
-                        .getProfileInfo(Configuration.URL_GET_PROFILE_INFO+"/"+profileId, headersMap)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                profileInfo -> psProfileSelectedLoaded.onNext(profileInfo)
-                                ,err->Log.e("AVX", "err", err)
-                        )
-        );
     }
 
     private void sendSettingDialogId() {
@@ -179,20 +157,12 @@ public class ConversationViewModel extends ViewModel {
         return psPerformRollbackMessageSwipe;
     }
 
-    public PublishSubject<String> getPsUserImageClicked() {
-        return psUserImageClicked;
-    }
-
-    public PublishSubject<UserDetailsResponse> getPsProfileSelectedLoaded() {
-        return psProfileSelectedLoaded;
+    public PublishSubject<String> getPsProfileSelectedAction() {
+        return psProfileSelectedAction;
     }
 
     public MutableLiveData<String> getLvEditMessageOriginalText() {
         return lvEditMessageOriginalText;
-    }
-
-    public void setLvEditMessageOriginalText(MutableLiveData<String> lvEditMessageOriginalText) {
-        this.lvEditMessageOriginalText = lvEditMessageOriginalText;
     }
 
     public String getIdDialog() {
@@ -232,9 +202,6 @@ public class ConversationViewModel extends ViewModel {
         return psRxMessagesList;
     }
 
-    public void setPsRxMessagesList(PublishSubject<List<RxMessage>> psRxMessagesList) {
-        this.psRxMessagesList = psRxMessagesList;
-    }
 
     public MutableLiveData<String> getLvSendPanelText() {
         return lvSendPanelText;
@@ -252,8 +219,8 @@ public class ConversationViewModel extends ViewModel {
         return resourceProvider;
     }
 
-    public PublishSubject<DialogProfileResponse> getPsDialogInfoLoadFinishedAction() {
-        return psDialogInfoLoadFinishedAction;
+    public PublishSubject<String> getPsDialogInfoAction() {
+        return psDialogInfoAction;
     }
 
     public void onRefreshMessages() {
@@ -264,20 +231,9 @@ public class ConversationViewModel extends ViewModel {
         return lvEditMessageVisibility;
     }
 
-    public void setLvEditMessageVisibility(MutableLiveData<Integer> lvEditMessageVisibility) {
-        this.lvEditMessageVisibility = lvEditMessageVisibility;
-    }
 
     public void onClickDialogOptions() {
-        disposables.add(
-            dialogRepository
-                .getDialogInfo(Configuration.URL_DIALOG_PROFILE + "/"+idDialog, headersMap)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(dialogInfo -> {
-                    psDialogInfoLoadFinishedAction.onNext(dialogInfo);
-                }, e-> Log.e("AVX", "err ", e))
-        );
+        psDialogInfoAction.onNext(idDialog);
     }
 
     public void onBtnCloseEdit(View view) {

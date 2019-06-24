@@ -5,6 +5,7 @@ import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -37,7 +38,6 @@ public class ConversationElementAdapter
 
 
     private List<RxMessage> messagesList = new ArrayList<>();
-    private LifecycleOwner lifecycleOwner;
 
 
     private Map<String, MessageViewModel> viewModelsMap = new HashMap<>();
@@ -48,20 +48,18 @@ public class ConversationElementAdapter
     private PublishSubject<RxMessage> psMessageEditRequest = PublishSubject.create();
     private PublishSubject<String> psUserImageClicked;
 
-    private ActivityConversationBinding activityConversationBinding;
+    private RecyclerView recyclerView;
 
     public ConversationElementAdapter(
-              LifecycleOwner lifecycleOwner
-            , String currentUserName
+              String currentUserName
             , ResourceProvider resourceProvider
-            , ActivityConversationBinding activityConversationBinding
+            , RecyclerView recyclerView
             , Picasso picasso
             , PublishSubject<String> psUserImageClicked
     ) {
-        this.lifecycleOwner = lifecycleOwner;
         this.currentUsername = currentUserName;
         this.resourceProvider = resourceProvider;
-        this.activityConversationBinding = activityConversationBinding;
+        this.recyclerView = recyclerView;
         this.picasso = picasso;
         this.psUserImageClicked = psUserImageClicked;
     }
@@ -161,7 +159,7 @@ public class ConversationElementAdapter
 
         if (getMessagePositionByMessageId(messageId) != null) {
             int msgPos = getMessagePositionByMessageId(messageId);
-            RecyclerView.ViewHolder viewHolder = activityConversationBinding.listMessages.findViewHolderForAdapterPosition(msgPos);
+            RecyclerView.ViewHolder viewHolder = recyclerView.findViewHolderForAdapterPosition(msgPos);
 
             viewHolder.itemView.setTranslationX(0);
             viewHolder.itemView.setAlpha(1f);
@@ -171,9 +169,7 @@ public class ConversationElementAdapter
 
     @Override
     public void onItemSwipping(int adapterPosition, Boolean direction) {
-        //в этом методе только меняем фон... TODO... нельзя тут вызывать notifyItemChanged
-
-        RecyclerView.ViewHolder viewHolder = activityConversationBinding.listMessages.findViewHolderForAdapterPosition(adapterPosition);
+        RecyclerView.ViewHolder viewHolder = recyclerView.findViewHolderForAdapterPosition(adapterPosition);
         if (direction)
             viewHolder.itemView.setBackgroundResource(R.color.green);
         else
@@ -187,11 +183,13 @@ public class ConversationElementAdapter
     }
 
     @Override
-    public boolean checkHasRightToSwipe(int adapterPosition) {
-        return currentUsername.equals(getMessagesList().get(adapterPosition).getUserFromName());
+    public int getSwipeFlags(int adapterPosition) {
+        if (currentUsername.equals(getMessagesList().get(adapterPosition).getUserFromName()))
+            return ItemTouchHelper.START | ItemTouchHelper.END;
+        return 0;
     }
 
-    public static class ConversationElementViewHolder extends RecyclerView.ViewHolder /*implements View.OnCreateContextMenuListener */{
+    public static class ConversationElementViewHolder extends RecyclerView.ViewHolder {
 
         ViewDataBinding viewDataBinding;
 
