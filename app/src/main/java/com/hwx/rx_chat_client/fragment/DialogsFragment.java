@@ -125,4 +125,10 @@ public class DialogsFragment extends Fragment {
 
         homeViewModel.onRefreshDialogs();
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        compositeDisposable.dispose();
+    }
 }

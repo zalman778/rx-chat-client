@@ -8,6 +8,7 @@ import android.view.View;
 
 import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat.common.response.UserDetailsResponse;
+import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.repository.DialogRepository;
 import com.hwx.rx_chat_client.repository.FriendRepository;
@@ -126,8 +127,7 @@ public class CreateDialogViewModel extends ViewModel {
         lvUserListVisibility.setValue(View.GONE);
         Disposable disposable = chatRepository
                 .getFriendList(
-                          headersMap
-                        , userId
+                        Configuration.URL_FRIENDS_LIST+"/"+userId, headersMap
                 )
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

@@ -37,24 +37,24 @@ public class ChatRepository {
         return chatService.signUpUser(signupRequest);
     }
 
-    public Observable<List<FriendResponse>> searchUsers(Map<String, String> headersMap, String username) {
-        return chatService.searchUsers(headersMap, username);
+    public Observable<List<FriendResponse>> searchUsers(String url, Map<String, String> headersMap) {
+        return chatService.searchUsers(url, headersMap);
     }
 
-    public Observable<List<DialogResponse>> getDialogList(Map<String, String> headersMap, String userId) {
-        return chatService.getDialogList(headersMap, userId);
+    public Observable<List<DialogResponse>> getDialogList(String url, Map<String, String> headersMap) {
+        return chatService.getDialogList(url, headersMap);
     }
 
-    public Observable<List<FriendResponse>> getFriendList(Map<String, String> headersMap, String userId) {
-        return chatService.getFriendsList(headersMap, userId);
+    public Observable<List<FriendResponse>> getFriendList(String url, Map<String, String> headersMap) {
+        return chatService.getFriendsList(url, headersMap);
     }
 
     public Observable<UserDetailsResponse> getProfileInfo(String url, Map<String, String> headersMap) {
         return chatService.getProfileInfo(url, headersMap);
     }
 
-    public Observable<List<RxMessage>> getMessageList(Map<String, String> headersMap, String dialogId) {
-        return chatService.getMessageList(headersMap, dialogId);
+    public Observable<List<RxMessage>> getMessageList(String url, Map<String, String> headersMap) {
+        return chatService.getMessageList(url, headersMap);
     }
 
 

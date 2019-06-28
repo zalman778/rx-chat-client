@@ -92,7 +92,7 @@ public class AddFriendViewModel extends ViewModel {
     public void sendSearchUsersRequest(String username) {
         compositeDisposable.add(
             chatRepository
-                .searchUsers(headersMap, username)
+                .searchUsers(Configuration.URL_USERS_SEARCH+"/"+ username, headersMap)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(friendList -> {

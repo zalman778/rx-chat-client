@@ -12,14 +12,15 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
+import com.hwx.rx_chat_client.repository.ChatRepository;
+import com.hwx.rx_chat_client.repository.DialogRepository;
+import com.hwx.rx_chat_client.repository.FriendRepository;
 import com.hwx.rx_chat_client.rsocket.ChatSocket;
 import com.hwx.rx_chat_client.rsocket.SocketServer;
-import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.service.ChatService;
-import com.hwx.rx_chat_client.repository.DialogRepository;
 import com.hwx.rx_chat_client.service.DialogService;
-import com.hwx.rx_chat_client.repository.FriendRepository;
 import com.hwx.rx_chat_client.service.FriendService;
+import com.hwx.rx_chat_client.util.NetworkUtil;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 import com.hwx.rx_chat_client.util.ViewModelFactory;
@@ -39,20 +40,21 @@ import java.text.SimpleDateFormat;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Singleton;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManagerFactory;
 
 import dagger.Module;
 import dagger.Provides;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import okhttp3.Cache;
 import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
@@ -119,16 +121,35 @@ public class UtilsModule {
     @Singleton
     OkHttpClient getOkHttpClient(SharedPreferencesProvider sharedPreferencesProvider) {
 
-
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
 
-        //temporary way, later should be fixed:
-        httpClient.hostnameVerifier(new HostnameVerifier() {
-            @Override
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
+        //caching...
+        Long cacheSize = 5*1024*1024L; //5mb cache size
+        Cache cache = new Cache(context.getCacheDir(), cacheSize);
+
+        Interceptor onlineInterceptor = chain -> {
+            Response response = chain.proceed(chain.request());
+            int maxAge = 60; // read from cache for 60 seconds even if there is internet connection
+            return response.newBuilder()
+                    .header("Cache-Control", "public, max-age=" + maxAge)
+                    .removeHeader("Pragma")
+                    .build();
+        };
+
+        Interceptor offileInterceptor = chain -> {
+            Request request = chain.request();
+            if (!NetworkUtil.hasNetwork(context)) {
+                request.newBuilder()
+                        .header("Cache-Control", "public, only-if-cached, max-stale=" + 60 * 60 * 24 * 7)
+                        .removeHeader("Pragma")
+                        .build();
             }
-        });
+            return chain.proceed(request);
+        };
+
+
+        //temporary way, later should be fixed:
+        httpClient.hostnameVerifier((hostname, session) -> true);
 
         //https support
         SSLContext sslContext = getSslContext();
@@ -161,6 +182,10 @@ public class UtilsModule {
                 return chain.proceed(newRequest);
             });
 
+        httpClient
+            .addInterceptor(offileInterceptor)
+            .addNetworkInterceptor(onlineInterceptor)
+            .cache(cache);
 
         return httpClient.build();
     }

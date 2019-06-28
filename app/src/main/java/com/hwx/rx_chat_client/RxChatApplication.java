@@ -6,6 +6,7 @@ import android.content.Context;
 import com.hwx.rx_chat_client.di.AppComponent;
 import com.hwx.rx_chat_client.di.DaggerAppComponent;
 import com.hwx.rx_chat_client.di.UtilsModule;
+import com.squareup.leakcanary.LeakCanary;
 
 
 public class RxChatApplication extends Application {
@@ -21,6 +22,13 @@ public class RxChatApplication extends Application {
                 .builder()
                 .utilsModule(new UtilsModule(this))
                 .build();
+
+        if (LeakCanary.isInAnalyzerProcess(this)) {
+            // This process is dedicated to LeakCanary for heap analysis.
+            // You should not init your app in this process.
+            return;
+        }
+        LeakCanary.install(this);
     }
 
     public AppComponent getAppComponent() {

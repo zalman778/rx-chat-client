@@ -323,8 +323,8 @@ public class HomeViewModel extends ViewModel {
         Disposable disposable =
             chatRepository
                 .getDialogList(
-                  headersMap
-                , userId
+                    Configuration.URL_DIALOGS_LIST+"/"+userId
+                      , headersMap
                 )
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -343,8 +343,8 @@ public class HomeViewModel extends ViewModel {
 
         Disposable disposable = chatRepository
                 .getFriendList(
-                          headersMap
-                        , userId
+                        Configuration.URL_FRIENDS_LIST+"/"+userId
+                         , headersMap
                 )
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

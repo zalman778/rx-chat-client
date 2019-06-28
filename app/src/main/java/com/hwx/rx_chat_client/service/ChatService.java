@@ -47,11 +47,10 @@ public interface ChatService {
             @Body SignupRequest signupRequest
     );
 
-    @FormUrlEncoded
-    @POST(Configuration.URL_USERS_SEARCH)
+    @GET
     Observable<List<FriendResponse>> searchUsers(
-             @HeaderMap Map<String, String> headers
-            , @Field("username") String username
+              @Url String url
+            , @HeaderMap Map<String, String> headers
     );
 
     @GET
@@ -60,27 +59,22 @@ public interface ChatService {
             , @HeaderMap Map<String, String> headers
     );
 
-
-    @FormUrlEncoded
-    @POST(Configuration.URL_DIALOGS_LIST)
+    @GET
     Observable<List<DialogResponse>> getDialogList(
-              @HeaderMap Map<String, String> headers
-            , @Field("userId") String userId
+              @Url String url
+            , @HeaderMap Map<String, String> headers
     );
 
-
-    @FormUrlEncoded
-    @POST(Configuration.URL_FRIENDS_LIST)
+    @GET
     Observable<List<FriendResponse>> getFriendsList(
-              @HeaderMap Map<String, String> headers
-            , @Field("userId") String userId
+              @Url String url
+            , @HeaderMap Map<String, String> headers
     );
 
-    @FormUrlEncoded
-    @POST(Configuration.URL_MESSAGES_LIST)
+    @GET
     Observable<List<RxMessage>> getMessageList(
-              @HeaderMap Map<String, String> headers
-            , @Field("dialogId") String dialogId
+              @Url String url
+            , @HeaderMap Map<String, String> headers
     );
 
     @POST(Configuration.URL_UPLOAD_PROFILE_PIC)

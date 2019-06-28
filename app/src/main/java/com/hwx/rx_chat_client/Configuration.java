@@ -17,7 +17,8 @@ public class Configuration {
 
     public static final String URL_SERVER = "http://"+IP+":8081/";
 
-    public static final String HTTPS_SERVER_URL = "https://"+IP+":8443/";
+    public static final int HTTPS_SERVER_PORT = 8443;
+    public static final String HTTPS_SERVER_URL = "https://"+IP+":"+HTTPS_SERVER_PORT+"/";
 
     public static final String IMAGE_PREFIX = "api/image/";
 

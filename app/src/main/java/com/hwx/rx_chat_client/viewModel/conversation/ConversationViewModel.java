@@ -178,7 +178,10 @@ public class ConversationViewModel extends ViewModel {
         //подгружаем список из статик бд
         disposables.add(
             chatRepository
-                .getMessageList(headersMap, idDialog)
+                .getMessageList(
+                        Configuration.URL_MESSAGES_LIST+"/"+idDialog
+                        , headersMap
+                )
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(rxMessageList -> psRxMessagesList.onNext(rxMessageList)
