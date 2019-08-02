@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
@@ -39,12 +41,15 @@ public class DialogProfileViewModel extends ViewModel {
 
     private MutableLiveData<String> lvImageUrl = new MutableLiveData<>();
     private MutableLiveData<String> lvCaption = new MutableLiveData<>();
+    private MutableLiveData<String> lvDialogCreatorUsername = new MutableLiveData<>();
+
     private MutableLiveData<Boolean> lvDialogMembersRefreshing = new MutableLiveData<>();
     private MutableLiveData<Integer> lvDialogMembersVisible = new MutableLiveData<>();
 
     private PublishSubject<String> psProfileSelected = PublishSubject.create();
     private PublishSubject<List<FriendResponse>> psDialogMembersLoadedAction = PublishSubject.create();
 
+    @Inject
     public DialogProfileViewModel(
               DialogRepository dialogRepository
             , ChatRepository chatRepository
@@ -69,6 +74,7 @@ public class DialogProfileViewModel extends ViewModel {
 
     public void setDialogResponse(DialogProfileResponse dialogProfileResponse) {
         creatorId.append(dialogProfileResponse.getCreatorId());
+        lvDialogCreatorUsername.setValue(dialogProfileResponse.getCreatorUsername());
         lvImageUrl.setValue(Configuration.HTTPS_SERVER_URL+Configuration.IMAGE_PREFIX+dialogProfileResponse.getChatImage());
         lvCaption.setValue(dialogProfileResponse.getDialogName());
         psDialogMembersLoadedAction.onNext(dialogProfileResponse.getFriendList());
@@ -112,6 +118,10 @@ public class DialogProfileViewModel extends ViewModel {
 
     public PublishSubject<List<FriendResponse>> getPsDialogMembersLoadedAction() {
         return psDialogMembersLoadedAction;
+    }
+
+    public MutableLiveData<String> getLvDialogCreatorUsername() {
+        return lvDialogCreatorUsername;
     }
 
     public StringBuilder getCreatorId() {

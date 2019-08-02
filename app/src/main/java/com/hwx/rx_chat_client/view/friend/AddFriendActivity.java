@@ -1,6 +1,7 @@
 package com.hwx.rx_chat_client.view.friend;
 
-import android.arch.lifecycle.MutableLiveData;
+import android.app.Activity;
+import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
@@ -11,24 +12,26 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 
 import com.hwx.rx_chat_client.R;
-import com.hwx.rx_chat_client.RxChatApplication;
 import com.hwx.rx_chat_client.adapter.FriendElementAdapter;
 import com.hwx.rx_chat_client.databinding.ActivityAddFriendBinding;
-import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.hwx.rx_chat_client.viewModel.friend.AddFriendViewModel;
-import com.hwx.rx_chat_client.viewModel.misc.DialogListAndIdDialogHolder;
 
 import javax.inject.Inject;
 
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasActivityInjector;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class AddFriendActivity extends AppCompatActivity {
-
+public class AddFriendActivity extends AppCompatActivity implements HasActivityInjector {
 
     @Inject
-    ViewModelFactory viewModelFactory;
+    public ViewModelProvider.Factory mFactory;
+
+    @Inject
+    DispatchingAndroidInjector<Activity> activityDispatchingAndroidInjector;
 
     private ActivityAddFriendBinding activityAddFriendBinding;
     private AddFriendViewModel addFriendViewModel;
@@ -39,8 +42,6 @@ public class AddFriendActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        ((RxChatApplication) getApplication()).getAppComponent().doInjectAddFriendActivity(this);
 
         initDataBinding();
 
@@ -82,7 +83,7 @@ public class AddFriendActivity extends AppCompatActivity {
     }
 
     private void initDataBinding() {
-        addFriendViewModel = ViewModelProviders.of(this, viewModelFactory).get(AddFriendViewModel.class);
+        addFriendViewModel = ViewModelProviders.of(this, mFactory).get(AddFriendViewModel.class);
         activityAddFriendBinding = DataBindingUtil.setContentView(this, R.layout.activity_add_friend);
         activityAddFriendBinding.setLifecycleOwner(this);
         activityAddFriendBinding.setAddFriendViewModel(addFriendViewModel);
@@ -113,4 +114,8 @@ public class AddFriendActivity extends AppCompatActivity {
         compositeDisposable.dispose();
     }
 
+    @Override
+    public AndroidInjector<Activity> activityInjector() {
+        return activityDispatchingAndroidInjector;
+    }
 }

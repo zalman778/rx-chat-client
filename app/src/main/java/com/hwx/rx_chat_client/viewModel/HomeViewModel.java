@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwx.rx_chat.common.entity.rx.RxMessage;
 import com.hwx.rx_chat.common.object.rx.RxObject;
 import com.hwx.rx_chat.common.object.rx.types.ObjectType;
@@ -17,7 +18,6 @@ import com.hwx.rx_chat.common.object.rx.types.SettingType;
 import com.hwx.rx_chat.common.request.ProfileInfoUpdateRequest;
 import com.hwx.rx_chat.common.response.DialogResponse;
 import com.hwx.rx_chat.common.response.FriendResponse;
-import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.fragment.DialogsFragment;
@@ -26,7 +26,6 @@ import com.hwx.rx_chat_client.fragment.HomeFragment;
 import com.hwx.rx_chat_client.fragment.ProfileFragment;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.repository.FriendRepository;
-import com.hwx.rx_chat_client.rsocket.ChatSocket;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 import com.hwx.rx_chat_client.util.SingleLiveEvent;
@@ -34,11 +33,13 @@ import com.hwx.rx_chat_client.view.misc.HomeTab;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
+import io.netty.handler.ssl.SslContext;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -51,14 +52,17 @@ import okhttp3.RequestBody;
 
 public class HomeViewModel extends ViewModel {
 
-
     private ChatRepository chatRepository;
+
     private FriendRepository friendRepository;
+
     private ResourceProvider resourceProvider;
+
     private SharedPreferencesProvider sharedPreferencesProvider;
-    private ChatSocket chatSocket;
 
     //TODO memory lead, fix it...
+    private Picasso picasso;
+
     private static Picasso staticPicasso;
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
@@ -69,7 +73,7 @@ public class HomeViewModel extends ViewModel {
     //dialogs fragment
     public MutableLiveData<Integer> isDialogsVisible = new MutableLiveData<>();
     public MutableLiveData<Boolean> isDialogsLoading = new MutableLiveData<>();
-    private MutableLiveData<Fragment> ldTabSwitched = new MutableLiveData<>();
+    private PublishSubject<Fragment> psTabSwitched = PublishSubject.create();
     private MutableLiveData<List<DialogResponse>> liveDialogList = new MutableLiveData<>();
 
     //мониторит выбор диалога в списке
@@ -113,21 +117,20 @@ public class HomeViewModel extends ViewModel {
     private MutableLiveData<Boolean> isFriendsListLoading = new MutableLiveData<>();
     private MutableLiveData<List<FriendResponse>> lvFriendsList = new MutableLiveData<>();
 
-
+    @Inject
     public HomeViewModel(
               ChatRepository chatRepository
             , FriendRepository friendRepository
             , ResourceProvider resourceProvider
             , SharedPreferencesProvider sharedPreferencesProvider
-            , ChatSocket chatSocket
             , Picasso picasso
 
     ) {
         this.chatRepository = chatRepository;
+        Log.w("AVX", "inside homeViewModel 2 contructor: chatRepo is"+(chatRepository == null));
         this.friendRepository = friendRepository;
         this.resourceProvider = resourceProvider;
         this.sharedPreferencesProvider = sharedPreferencesProvider;
-        this.chatSocket = chatSocket;
         staticPicasso = picasso;
 
         lvProfileProgressVisibility.setValue(View.GONE);
@@ -155,14 +158,18 @@ public class HomeViewModel extends ViewModel {
         lvProfileUsername.setValue(pref.getString("username", ""));
 
         subscribePublishers();
+
+        //sending userId
+        RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.ID_USER_FOR_BACKGROUND, userId, null);
+        ppDialogFragment.onNext(rxObject);
     }
 
     public MutableLiveData<List<DialogResponse>> getLiveDialogList() {
         return liveDialogList;
     }
 
-    public MutableLiveData<Fragment> getLdTabSwitched() {
-        return ldTabSwitched;
+    public PublishSubject<Fragment> getPsTabSwitched() {
+        return psTabSwitched;
     }
 
     public PublishSubject<Integer> getPsProfileLogout() {
@@ -275,7 +282,7 @@ public class HomeViewModel extends ViewModel {
     }
 
     private void showFriendsFragment() {
-        ldTabSwitched.setValue(new FriendsFragment());
+        psTabSwitched.onNext(new FriendsFragment());
     }
 
     private void resetTabs() {
@@ -289,27 +296,27 @@ public class HomeViewModel extends ViewModel {
     }
 
     private void subscribePublishers() {
-
-        compositeDisposable.add(
-            chatSocket
-                .getEventChannel(ppDialogFragment)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(rxObject -> {
-                    //Fixing time from Mongo if its message:
-                    if (rxObject.getMessage() != null) {
-                        Calendar cal = Calendar.getInstance();
-                        cal.setTime(rxObject.getMessage().getDateSent());
-                        cal.add(Calendar.HOUR_OF_DAY, Configuration.MONGO_TIMEZONE_CORRECTION_HRS);
-                        rxObject.getMessage().setDateSent(cal.getTime());
-
-                        //updating message viewmodel:
-                        psRecievedRxMessageAction.onNext(rxObject.getMessage());
-                    }
-                    Log.w("AVX", "GOT in hvm : rxObj = "+rxObject.toString());
-                    //psRxMessage.onNext(rxObject);
-                }, e->Log.e("AVX", "err on rx "+e.getMessage()+"; "+e.getLocalizedMessage(), e))
-        );
+        //TODO: chatSocket
+//        compositeDisposable.add(
+//            chatSocket
+//                .getEventChannel(ppDialogFragment)
+//                .subscribeOn(Schedulers.io())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe(rxObject -> {
+//                    //Fixing time from Mongo if its message:
+//                    if (rxObject.getMessage() != null) {
+//                        Calendar cal = Calendar.getInstance();
+//                        cal.setTime(rxObject.getMessage().getDateSent());
+//                        cal.add(Calendar.HOUR_OF_DAY, Configuration.MONGO_TIMEZONE_CORRECTION_HRS);
+//                        rxObject.getMessage().setDateSent(cal.getTime());
+//
+//                        //updating message viewmodel:
+//                        psRecievedRxMessageAction.onNext(rxObject.getMessage());
+//                    }
+//                    Log.w("AVX", "GOT in hvm : rxObj = "+rxObject.toString());
+//                    //psRxMessage.onNext(rxObject);
+//                }, e->Log.e("AVX", "err on rx "+e.getMessage()+"; "+e.getLocalizedMessage(), e))
+//        );
 
     }
 
@@ -360,18 +367,18 @@ public class HomeViewModel extends ViewModel {
 
 
     private void showHomeFragment() {
-        ldTabSwitched.setValue(new HomeFragment());
+        psTabSwitched.onNext(new HomeFragment());
     }
 
     private void showDialogsFragment() {
         Log.w("AVX", "rx setted userId = "+userId);
-        RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.ID_USER, userId, null);
+        RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.ID_USER_FOR_CONVERSATION, userId, null);
         ppDialogFragment.onNext(rxObject);
-        ldTabSwitched.setValue(new DialogsFragment());
+        psTabSwitched.onNext(new DialogsFragment());
     }
 
     private void showProfileFragment() {
-        ldTabSwitched.setValue(new ProfileFragment());
+        psTabSwitched.onNext(new ProfileFragment());
     }
 
     public void onProfileAvatarClick(View view) {

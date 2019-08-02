@@ -4,12 +4,18 @@ import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 import android.content.SharedPreferences;
 import android.databinding.BindingAdapter;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
+import com.hwx.rx_chat.common.object.rx.RxObject;
+import com.hwx.rx_chat.common.object.rx.types.EventType;
+import com.hwx.rx_chat.common.object.rx.types.ObjectType;
 import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
+import com.hwx.rx_chat_client.background.service.RxService;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.repository.DialogRepository;
 import com.hwx.rx_chat_client.repository.FriendRepository;
@@ -18,6 +24,8 @@ import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.inject.Inject;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -51,9 +59,12 @@ public class ProfileViewModel extends ViewModel {
     private MutableLiveData<Integer> lvVisibilitySendFriendRequest = new MutableLiveData<>();
     private MutableLiveData<Integer> lvVisibilityProfileProgress = new MutableLiveData<>();
     private MutableLiveData<Integer> lvVisibilityOpenDialog = new MutableLiveData<>();
+    private MutableLiveData<Integer> lvVisibilityOpenP2PChat = new MutableLiveData<>();
+
     private MutableLiveData<String> lvProfileRequestResult = new MutableLiveData<>();
+    private RxService rxService;
 
-
+    @Inject
     public ProfileViewModel(
               SharedPreferencesProvider sharedPreferencesProvider
             , FriendRepository friendRepository
@@ -73,14 +84,43 @@ public class ProfileViewModel extends ViewModel {
 
         lvVisibilitySendFriendRequest.setValue(View.GONE);
         lvVisibilityOpenDialog.setValue(View.GONE);
+        lvVisibilityOpenP2PChat.setValue(View.GONE);
         lvVisibilityProfileProgress.setValue(View.GONE);
+
+    }
+
+    public void setRxService(RxService rxService) {
+        this.rxService = rxService;
+        subscribeRxService();
+    }
+
+    private void subscribeRxService() {
+        compositeDisposable.add(
+                rxService.getPpRxProcessor()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                rxObject -> {
+                                    if (rxObject.getEventType().equals(EventType.FRIEND_SOCKET_INFO)
+                                            && rxObject.getObjectType().equals(ObjectType.EVENT)) {
+                                        actionOpenP2PConverstion((String) rxObject.getValue());
+                                    }
+                                    Log.w("AVX", "got rxObj="+rxObject.toString());
+                                }
+                                , err-> Log.e("AVX", "err", err))
+        );
+    }
+
+    private void actionOpenP2PConverstion(String profileSocketInfo) {
 
     }
 
     public void setProfileId(String profileId) {
 
-        if (!selfUserId.equals(profileId))
+        if (!selfUserId.equals(profileId)) {
             lvVisibilityOpenDialog.setValue(View.VISIBLE);
+            lvVisibilityOpenP2PChat.setValue(View.VISIBLE);
+        }
 
         lvVisibilityProfileProgress.setValue(View.VISIBLE);
         Log.w("AVX", "connecting to "+Configuration.URL_GET_PROFILE_INFO+"/"+profileId);
@@ -161,6 +201,10 @@ public class ProfileViewModel extends ViewModel {
         return lvVisibilityOpenDialog;
     }
 
+    public MutableLiveData<Integer> getLvVisibilityOpenP2PChat() {
+        return lvVisibilityOpenP2PChat;
+    }
+
     // Loading Image using Picasso
     @BindingAdapter("imageUrl")
     public static void setLvProfileAvatarUrl(ImageView imageView, String url){
@@ -170,6 +214,15 @@ public class ProfileViewModel extends ViewModel {
                     .into(imageView);
     }
 
+    public void onClickOpenP2PChat() {
+
+
+        new Handler(Looper.getMainLooper()).postDelayed(()-> {
+            RxObject rxRequest = new RxObject(ObjectType.REQUEST_IP, profileId);
+            rxService.sendRxObject(rxRequest);
+        }, 500);
+    }
+
     public void onClickOpenChat() {
         compositeDisposable.add(
             dialogRepository
@@ -177,10 +230,7 @@ public class ProfileViewModel extends ViewModel {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                          resp-> {
-                              psDialogOpenAction.onNext(resp.getValue());
-
-                          }
+                          resp-> psDialogOpenAction.onNext(resp.getValue())
                         , err-> Log.e("AVX", "err", err))
 
         );
@@ -205,6 +255,7 @@ public class ProfileViewModel extends ViewModel {
         super.onCleared();
         compositeDisposable.dispose();
     }
+
 
 
 }

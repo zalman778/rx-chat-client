@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
@@ -38,6 +40,7 @@ public class AddFriendViewModel extends ViewModel {
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private Map<String, String> headersMap = new HashMap<>();
 
+    @Inject
     public AddFriendViewModel(FriendRepository friendRepository, ChatRepository chatRepository, SharedPreferencesProvider sharedPreferencesProvider, Picasso picasso) {
         this.chatRepository = chatRepository;
         this.friendRepository = friendRepository;

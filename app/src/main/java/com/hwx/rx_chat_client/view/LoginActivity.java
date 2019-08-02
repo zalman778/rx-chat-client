@@ -1,6 +1,8 @@
 package com.hwx.rx_chat_client.view;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
+import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
@@ -10,24 +12,29 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import com.hwx.rx_chat.common.response.LoginResponse;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
-import com.hwx.rx_chat_client.RxChatApplication;
 import com.hwx.rx_chat_client.databinding.ActivityLoginBinding;
-import com.hwx.rx_chat.common.response.LoginResponse;
-import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.hwx.rx_chat_client.viewModel.LoginViewModel;
 
 import javax.inject.Inject;
 
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasActivityInjector;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity implements HasActivityInjector {
+
 
     @Inject
-    ViewModelFactory viewModelFactory;
+    public ViewModelProvider.Factory mFactory;
+
+    @Inject
+    DispatchingAndroidInjector<Activity> activityDispatchingAndroidInjector;
 
     private ActivityLoginBinding activityLoginBinding;
     private LoginViewModel loginViewModel;
@@ -39,7 +46,6 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        ((RxChatApplication) getApplication()).getAppComponent().doInjectLoginActivity(this);
         initDataBinding();
 
         progressDialog = new ProgressDialog(this);
@@ -95,7 +101,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void initDataBinding() {
-        loginViewModel = ViewModelProviders.of(this, viewModelFactory).get(LoginViewModel.class);
+        loginViewModel = ViewModelProviders.of(this, mFactory).get(LoginViewModel.class);
         activityLoginBinding = DataBindingUtil.setContentView(this, R.layout.activity_login);
         activityLoginBinding.setLifecycleOwner(this);
         activityLoginBinding.setLoginViewModel(loginViewModel);
@@ -103,5 +109,10 @@ public class LoginActivity extends AppCompatActivity {
 
     public static Intent getIntent(Context context) {
         return new Intent(context, LoginActivity.class);
+    }
+
+    @Override
+    public AndroidInjector<Activity> activityInjector() {
+        return activityDispatchingAndroidInjector;
     }
 }

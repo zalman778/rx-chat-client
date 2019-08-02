@@ -1,5 +1,7 @@
 package com.hwx.rx_chat_client.view.dialog;
 
+import android.app.Activity;
+import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
@@ -12,24 +14,29 @@ import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 
 import com.hwx.rx_chat_client.R;
-import com.hwx.rx_chat_client.RxChatApplication;
 import com.hwx.rx_chat_client.adapter.FriendElementAdapter;
 import com.hwx.rx_chat_client.adapter.misc.ItemTouchHelperCallback;
 import com.hwx.rx_chat_client.databinding.ActivityDialogProfileBinding;
-import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.hwx.rx_chat_client.view.friend.ProfileActivity;
 import com.hwx.rx_chat_client.viewModel.conversation.DialogProfileViewModel;
 
 import javax.inject.Inject;
 
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasActivityInjector;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 
-public class DialogProfileActivity extends AppCompatActivity {
+public class DialogProfileActivity extends AppCompatActivity implements HasActivityInjector {
+
+    @Inject
+    public ViewModelProvider.Factory mFactory;
+
+    @Inject
+    DispatchingAndroidInjector<Activity> activityDispatchingAndroidInjector;
 
     private static final String EXTRA_DIALOG_ID = "EXTRA_DIALOG_ID";
-    @Inject
-    ViewModelFactory viewModelFactory;
 
     private ActivityDialogProfileBinding activityDialogProfileBinding;
     private DialogProfileViewModel dialogProfileViewModel;
@@ -45,9 +52,6 @@ public class DialogProfileActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
-        ((RxChatApplication) getApplication()).getAppComponent().doInjectDialogProfileActivity(this);
-
         initDataBinding();
 
         initRecyclerViewAdapter();
@@ -62,7 +66,7 @@ public class DialogProfileActivity extends AppCompatActivity {
 
 
     private void initDataBinding() {
-        dialogProfileViewModel = ViewModelProviders.of(this, viewModelFactory).get(DialogProfileViewModel.class);
+        dialogProfileViewModel = ViewModelProviders.of(this, mFactory).get(DialogProfileViewModel.class);
         activityDialogProfileBinding = DataBindingUtil.setContentView(this, R.layout.activity_dialog_profile);
         activityDialogProfileBinding.setLifecycleOwner(this);
         activityDialogProfileBinding.setDialogProfileViewModel(dialogProfileViewModel);
@@ -140,5 +144,10 @@ public class DialogProfileActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         compositeDisposable.dispose();
+    }
+
+    @Override
+    public AndroidInjector<Activity> activityInjector() {
+        return activityDispatchingAndroidInjector;
     }
 }

@@ -3,7 +3,6 @@ package com.hwx.rx_chat_client.viewModel.conversation;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 import android.content.SharedPreferences;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 
@@ -12,11 +11,10 @@ import com.hwx.rx_chat.common.object.rx.RxObject;
 import com.hwx.rx_chat.common.object.rx.types.EventType;
 import com.hwx.rx_chat.common.object.rx.types.ObjectType;
 import com.hwx.rx_chat.common.object.rx.types.SettingType;
-import com.hwx.rx_chat.common.response.DialogProfileResponse;
 import com.hwx.rx_chat_client.Configuration;
+import com.hwx.rx_chat_client.background.service.RxService;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.repository.DialogRepository;
-import com.hwx.rx_chat_client.rsocket.ChatSocket;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 import com.squareup.picasso.Picasso;
@@ -27,6 +25,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+
+import javax.inject.Inject;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -45,9 +45,9 @@ public class ConversationViewModel extends ViewModel {
     private DialogRepository dialogRepository;
     private ResourceProvider resourceProvider;
     private SharedPreferencesProvider sharedPreferencesProvider;
-    private ChatSocket chatSocket;
-
     private Picasso picasso;
+
+    private String userId;
 
     private CompositeDisposable disposables = new CompositeDisposable();
 
@@ -76,19 +76,21 @@ public class ConversationViewModel extends ViewModel {
     private RxMessage editableMessage;
 
 
+    private RxService rxService;
+
+    @Inject
     public ConversationViewModel(
               ChatRepository chatRepository
-             , DialogRepository dialogRepository
+            , DialogRepository dialogRepository
             , ResourceProvider resourceProvider
             , SharedPreferencesProvider sharedPreferencesProvider
-            , ChatSocket chatSocket
-            , Picasso picasso) {
+            , Picasso picasso
+    ) {
 
         this.chatRepository = chatRepository;
         this.dialogRepository = dialogRepository;
         this.resourceProvider = resourceProvider;
         this.sharedPreferencesProvider = sharedPreferencesProvider;
-        this.chatSocket = chatSocket;
         this.picasso = picasso;
 
         this.isMessagesVisible.setValue(View.VISIBLE);
@@ -97,48 +99,52 @@ public class ConversationViewModel extends ViewModel {
 
         SharedPreferences pref = sharedPreferencesProvider.getSharedPreferences("localPref", 0);
         headersMap.put("Authorization", pref.getString("token", ""));
-
-        subscribePublishers();
-
+        userId = sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("user_id", "");
+        //subscribePublishers();
     }
+
+
 
     private void subscribePublishers() {
         //получаем реактивно сообщения
         disposables.add(
-                chatSocket
-                        .getPsRxMessageA()
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(rxObject -> {
-                            //Fixing time from Mongo if its message:
-                            if (rxObject.getMessage() != null) {
-                                Calendar cal = Calendar.getInstance();
-                                cal.setTime(rxObject.getMessage().getDateSent());
-                                cal.add(Calendar.HOUR_OF_DAY, Configuration.MONGO_TIMEZONE_CORRECTION_HRS);
-                                rxObject.getMessage().setDateSent(cal.getTime());
-                            }
-                            psRxMessage.onNext(rxObject);
-                        },
-                                e->Log.e("AVX", "err on rx "+e.getMessage()+"; "+e.getLocalizedMessage(), e))
+            rxService.getPpRxProcessor()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(rxObject -> {
+                    //Fixing time from Mongo if its message:
+                    if (rxObject.getMessage() != null) {
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime(rxObject.getMessage().getDateSent());
+                        cal.add(Calendar.HOUR_OF_DAY, Configuration.MONGO_TIMEZONE_CORRECTION_HRS);
+                        rxObject.getMessage().setDateSent(cal.getTime());
+                    }
+                    psRxMessage.onNext(rxObject);
+                },
+                        e->Log.e("AVX", "err on rx "+e.getMessage()+"; "+e.getLocalizedMessage(), e))
         );
 
     }
 
     private void sendSettingDialogId() {
-        RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.ID_DIALOG, idDialog, null);
-        chatSocket.putRxObjectA(rxObject);
+        RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.ID_DIALOG_FOR_CONVERSATION, idDialog, null);
+        rxService.sendRxObject(rxObject);
+    }
+
+    private void sendSettingUserId() {
+        RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.ID_USER_FOR_BACKGROUND, userId, null);
+        rxService.sendRxObject(rxObject);
     }
 
     private void sendSettingUsername() {
-        String username = sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("username", "");
-        RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.USERNAME, username, null);
-        chatSocket.putRxObjectA(rxObject);
+        RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.ID_USER_FOR_CONVERSATION, userId, null);
+        rxService.sendRxObject(rxObject);
     }
 
 
     public void sendRxEventMessageDelete(String messageId) {
         RxObject rxObject = new RxObject(ObjectType.EVENT, EventType.MESSAGE_DELETED, messageId, (RxMessage)null);
-        chatSocket.putRxObjectA(rxObject);
+        rxService.sendRxObject(rxObject);
     }
 
     public Picasso getPicasso() {
@@ -171,9 +177,6 @@ public class ConversationViewModel extends ViewModel {
 
     public void setIdDialog(String idDialog) {
         this.idDialog = idDialog;
-        sendSettingDialogId();
-
-
 
         //подгружаем список из статик бд
         disposables.add(
@@ -188,17 +191,6 @@ public class ConversationViewModel extends ViewModel {
                     , e-> Log.e("AVX", "got error while fetching static messages ", e)
                 )
         );
-
-        //delayed with 1000ms, due to socket err:
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-
-            @Override
-            public void run() {
-                sendSettingUsername();
-            }
-
-        }, 1000);
     }
 
     public PublishSubject<List<RxMessage>> getPsRxMessagesList() {
@@ -224,6 +216,15 @@ public class ConversationViewModel extends ViewModel {
 
     public PublishSubject<String> getPsDialogInfoAction() {
         return psDialogInfoAction;
+    }
+
+
+    public void setRxService(RxService rxService) {
+        this.rxService = rxService;
+        sendSettingUserId();
+        sendSettingDialogId();
+        sendSettingUsername();
+        subscribePublishers();
     }
 
     public void onRefreshMessages() {
@@ -258,7 +259,7 @@ public class ConversationViewModel extends ViewModel {
 
             RxObject rxObject = new RxObject(ObjectType.EVENT, EventType.MESSAGE_EDIT, null, editableMessage);
             editableMessage = null;
-            chatSocket.putRxObjectA(rxObject);
+            rxService.sendRxObject(rxObject);
 
             //closing everything
             lvEditMessageVisibility.setValue(View.GONE);
@@ -279,7 +280,7 @@ public class ConversationViewModel extends ViewModel {
 
             Log.w("AVX", "sending rx message:"+rxMessage.getValue());
             RxObject rxObject = new RxObject(ObjectType.EVENT, EventType.MESSAGE_NEW_FROM_CLIENT, null, rxMessage);
-            chatSocket.putRxObjectA(rxObject);
+            rxService.sendRxObject(rxObject);
 
         }
     }

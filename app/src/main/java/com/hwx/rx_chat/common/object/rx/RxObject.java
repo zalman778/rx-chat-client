@@ -42,6 +42,11 @@ public class RxObject implements Serializable {
     public RxObject() {
     }
 
+    public RxObject(ObjectType objectType, Object value) {
+        this.objectType = objectType;
+        this.value = value;
+    }
+
     public RxObject(ObjectType objectType, EventType eventType, Object value, RxMessage rxMessage) {
         this.objectType = objectType;
         this.eventType = eventType;

@@ -15,6 +15,8 @@ import com.squareup.picasso.Picasso;
 
 import java.text.SimpleDateFormat;
 
+import javax.inject.Inject;
+
 import io.reactivex.subjects.PublishSubject;
 
 public class MessageViewModel extends ViewModel {
@@ -30,6 +32,7 @@ public class MessageViewModel extends ViewModel {
     //TODO fix memory leak!
     private static Picasso staticPicasso;
 
+    @Inject
     public MessageViewModel(ResourceProvider resourceProvider, Picasso picasso,  PublishSubject<String> psUserImageClicked) {
         this.resourceProvider = resourceProvider;
         lvMessageBackgroundColor.setValue(new ColorDrawable(resourceProvider.getColorDrawable(R.color.transparent)));

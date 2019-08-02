@@ -1,8 +1,11 @@
 package com.hwx.rx_chat_client.util;
 
 import android.content.Context;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+
+/**
+ * Represents a single point of access to the resources
+ */
 
 public class ResourceProvider {
 

@@ -12,6 +12,8 @@ import com.hwx.rx_chat_client.repository.ChatRepository;
 
 import java.util.Objects;
 
+import javax.inject.Inject;
+
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
@@ -30,13 +32,16 @@ public class LoginViewModel extends ViewModel {
 
     private ChatRepository chatRepository;
 
-    public LoginViewModel(ChatRepository chatRepository) {
-
+    @Inject
+    public LoginViewModel(
+            ChatRepository chatRepository
+    ) {
         this.chatRepository = chatRepository;
-        //TODO: remove
-        emailAddress.setValue("a@a.a");
+        emailAddress.setValue("aa@aa.aa");
         password.setValue("12345678");
     }
+
+
 
     public MutableLiveData<LoginResponse> getResponseLiveData() {
         return responseLiveData;
@@ -72,7 +77,9 @@ public class LoginViewModel extends ViewModel {
         }
         else {
             String encryptedPass = password.getValue();
-            disposables.add(chatRepository.authorizeWithResponse(emailAddress.getValue(), encryptedPass)
+            disposables.add(
+
+                chatRepository.authorizeWithResponse(emailAddress.getValue(), encryptedPass)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .doOnSubscribe((d) -> responseLiveData.setValue(new LoginResponse("loading", null)))

@@ -10,7 +10,8 @@ public class Configuration {
     public static final int RSOCKET_MISSED_ACKS = 10;
 
 
-    //public static final int RSOCKET_CLIENT_SERVER_PORT = 8113;
+    public static final int RSOCKET_CLIENT_SERVER_PORT = 6000 + (int) Math.round(Math.random() * 1000);
+
     //avd:
     public static final String IP = BuildConfig.ServerIpAddr;
 

@@ -11,6 +11,8 @@ import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat_client.Configuration;
 import com.squareup.picasso.Picasso;
 
+import javax.inject.Inject;
+
 import io.reactivex.subjects.PublishSubject;
 
 public class FriendElementViewModel extends ViewModel {
@@ -29,7 +31,7 @@ public class FriendElementViewModel extends ViewModel {
     //TODO fix memory leak!
     private static Picasso staticPicasso;
 
-
+    @Inject
     public FriendElementViewModel(FriendResponse friendResponse, PublishSubject<String> psProfileSelected,  PublishSubject<String> psProfilePicked, Picasso picasso, boolean canBePicked) {
         setFriendResponse(friendResponse);
         this.psProfileSelected = psProfileSelected;

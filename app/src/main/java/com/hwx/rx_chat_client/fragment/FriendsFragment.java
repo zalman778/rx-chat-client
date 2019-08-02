@@ -1,5 +1,6 @@
 package com.hwx.rx_chat_client.fragment;
 
+import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
@@ -20,7 +21,6 @@ import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.adapter.FriendElementAdapter;
 import com.hwx.rx_chat_client.adapter.misc.ItemTouchHelperCallback;
 import com.hwx.rx_chat_client.databinding.FragmentFriendsBinding;
-import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.hwx.rx_chat_client.view.friend.AddFriendActivity;
 import com.hwx.rx_chat_client.view.friend.ProfileActivity;
 import com.hwx.rx_chat_client.viewModel.HomeViewModel;
@@ -33,8 +33,9 @@ import io.reactivex.schedulers.Schedulers;
 
 public class FriendsFragment extends Fragment {
 
+
     @Inject
-    ViewModelFactory viewModelFactory;
+    public ViewModelProvider.Factory mFactory;
 
     private FragmentFriendsBinding fragmentFriendsBinding;
     private HomeViewModel homeViewModel;
@@ -58,7 +59,7 @@ public class FriendsFragment extends Fragment {
 
 
         View view = fragmentFriendsBinding.getRoot();
-        homeViewModel = ViewModelProviders.of(getActivity(), viewModelFactory).get(HomeViewModel.class);
+        homeViewModel = ViewModelProviders.of(getActivity(), mFactory).get(HomeViewModel.class);
         fragmentFriendsBinding.setHomeViewModel(homeViewModel);
         fragmentFriendsBinding.setLifecycleOwner(this);
 

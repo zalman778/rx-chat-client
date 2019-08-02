@@ -1,6 +1,5 @@
 package com.hwx.rx_chat_client.di;
 
-import android.arch.lifecycle.ViewModelProvider;
 import android.content.Context;
 import android.util.Log;
 
@@ -12,18 +11,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
+import com.hwx.rx_chat_client.RxChatApplication;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.repository.DialogRepository;
 import com.hwx.rx_chat_client.repository.FriendRepository;
-import com.hwx.rx_chat_client.rsocket.ChatSocket;
-import com.hwx.rx_chat_client.rsocket.SocketServer;
 import com.hwx.rx_chat_client.service.ChatService;
 import com.hwx.rx_chat_client.service.DialogService;
 import com.hwx.rx_chat_client.service.FriendService;
 import com.hwx.rx_chat_client.util.NetworkUtil;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
-import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.squareup.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
 
@@ -71,6 +68,12 @@ public class UtilsModule {
 
     @Provides
     @Singleton
+    RxChatApplication provideRxChatApplication() {
+        return new RxChatApplication();
+    }
+
+    @Provides
+    @Singleton
     Context provideContext() {
         return context;
     }
@@ -108,8 +111,6 @@ public class UtilsModule {
     @Provides
     @Singleton
     Picasso getPicasso(Context context, OkHttpClient okHttpClient) {
-
-        Log.i("AVX", "initializing picasso");
         Picasso picasso = new Picasso.Builder(context)
                 .downloader(new OkHttp3Downloader(okHttpClient))
                 .build();
@@ -221,7 +222,9 @@ public class UtilsModule {
         }
     }
 
-    private SslContext getNettySslContext() {
+    @Provides
+    @Singleton
+    public SslContext getNettySslContext() {
         SslContext sslContext = null;
         try {
 
@@ -246,19 +249,6 @@ public class UtilsModule {
             return null;
         }
     }
-
-    @Provides
-    @Singleton
-    public ChatSocket getChatSocket() {
-        return ChatSocket.openSocketA(getNettySslContext(), getObjectMapper());
-    }
-
-    @Provides
-    @Singleton
-    public SocketServer getSocketServer() {
-        return new SocketServer(getNettySslContext(), getObjectMapper());
-    }
-
 
     private KeyStore readKeyStore() {
         KeyStore ks = null;
@@ -308,19 +298,22 @@ public class UtilsModule {
         return new DialogRepository(dialogService);
     }
 
-    @Provides
-    @Singleton
-    ViewModelProvider.Factory getViewModelFactory(
-              ChatRepository repository
-            , FriendRepository friendRepository
-            , DialogRepository dialogRepository
-            , ResourceProvider resourceProvider
-            , SharedPreferencesProvider sharedPreferencesProvider
-            , ChatSocket chatSocket
-            , SocketServer socketServer
-            , Picasso picasso
-    ) {
-        return new ViewModelFactory(repository, friendRepository, dialogRepository, resourceProvider, sharedPreferencesProvider, chatSocket, socketServer, picasso);
-    }
+//    @Provides
+//    @Singleton
+//    ViewModelFactory getViewModelFactory(
+//              ChatRepository repository
+//            , FriendRepository friendRepository
+//            , DialogRepository dialogRepository
+//            , ResourceProvider resourceProvider
+//            , SharedPreferencesProvider sharedPreferencesProvider
+//            , Picasso picasso
+//            , SslContext sslContext
+//            , ObjectMapper objectMapper
+//    ) {
+//        return new ViewModelFactory(
+//                  repository, friendRepository, dialogRepository, resourceProvider
+//                , sharedPreferencesProvider, picasso, sslContext, objectMapper
+//        );
+//    }
 
 }

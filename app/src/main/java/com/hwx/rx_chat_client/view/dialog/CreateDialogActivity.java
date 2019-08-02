@@ -1,5 +1,7 @@
 package com.hwx.rx_chat_client.view.dialog;
 
+import android.app.Activity;
+import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
@@ -10,25 +12,28 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 
 import com.hwx.rx_chat_client.R;
-import com.hwx.rx_chat_client.RxChatApplication;
 import com.hwx.rx_chat_client.adapter.FriendElementAdapter;
 import com.hwx.rx_chat_client.databinding.ActivityCreateDialogBinding;
-import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.hwx.rx_chat_client.viewModel.conversation.CreateDialogViewModel;
 
 import java.util.List;
 
 import javax.inject.Inject;
 
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasActivityInjector;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class CreateDialogActivity extends AppCompatActivity {
-
+public class CreateDialogActivity extends AppCompatActivity implements HasActivityInjector {
 
     @Inject
-    ViewModelFactory viewModelFactory;
+    public ViewModelProvider.Factory mFactory;
+
+    @Inject
+    DispatchingAndroidInjector<Activity> activityDispatchingAndroidInjector;
 
     private ActivityCreateDialogBinding activityCreateDialogBinding;
     private CreateDialogViewModel createDialogViewModel;
@@ -39,8 +44,6 @@ public class CreateDialogActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        ((RxChatApplication) getApplication()).getAppComponent().doInjectCreateDialogActivity(this);
 
         initDataBinding();
 
@@ -89,7 +92,7 @@ public class CreateDialogActivity extends AppCompatActivity {
     }
 
     private void initDataBinding() {
-        createDialogViewModel = ViewModelProviders.of(this, viewModelFactory).get(CreateDialogViewModel.class);
+        createDialogViewModel = ViewModelProviders.of(this, mFactory).get(CreateDialogViewModel.class);
         activityCreateDialogBinding = DataBindingUtil.setContentView(this, R.layout.activity_create_dialog);
         activityCreateDialogBinding.setLifecycleOwner(this);
         activityCreateDialogBinding.setCreateDialogViewModel(createDialogViewModel);
@@ -122,4 +125,8 @@ public class CreateDialogActivity extends AppCompatActivity {
         compositeDisposable.dispose();
     }
 
+    @Override
+    public AndroidInjector<Activity> activityInjector() {
+        return activityDispatchingAndroidInjector;
+    }
 }

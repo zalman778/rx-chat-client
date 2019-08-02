@@ -1,5 +1,7 @@
 package com.hwx.rx_chat_client.view;
 
+import android.app.Activity;
+import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
@@ -8,21 +10,25 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
 import com.hwx.rx_chat_client.R;
-import com.hwx.rx_chat_client.RxChatApplication;
 import com.hwx.rx_chat_client.databinding.ActivitySignupBinding;
-import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.hwx.rx_chat_client.viewModel.SignupViewModel;
 
 import javax.inject.Inject;
 
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasActivityInjector;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class SignupActivity extends AppCompatActivity {
+public class SignupActivity extends AppCompatActivity implements HasActivityInjector {
 
     @Inject
-    ViewModelFactory viewModelFactory;
+    public ViewModelProvider.Factory mFactory;
+
+    @Inject
+    DispatchingAndroidInjector<Activity> activityDispatchingAndroidInjector;
 
     private SignupViewModel signupViewModel;
     private ActivitySignupBinding activitySignupBinding;
@@ -33,8 +39,6 @@ public class SignupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
-        ((RxChatApplication) getApplication()).getAppComponent().doInjectSignupActivity(this);
         initDataBinding();
 
         compositeDisposable.add(
@@ -50,7 +54,7 @@ public class SignupActivity extends AppCompatActivity {
     }
 
     private void initDataBinding() {
-        signupViewModel = ViewModelProviders.of(this, viewModelFactory).get(SignupViewModel.class);
+        signupViewModel = ViewModelProviders.of(this, mFactory).get(SignupViewModel.class);
         activitySignupBinding = DataBindingUtil.setContentView(this, R.layout.activity_signup);
         activitySignupBinding.setLifecycleOwner(this);
         activitySignupBinding.setSignupViewModel(signupViewModel);
@@ -60,4 +64,8 @@ public class SignupActivity extends AppCompatActivity {
         return new Intent(context, SignupActivity.class);
     }
 
+    @Override
+    public AndroidInjector<Activity> activityInjector() {
+        return activityDispatchingAndroidInjector;
+    }
 }

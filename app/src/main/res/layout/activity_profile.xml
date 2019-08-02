@@ -120,10 +120,20 @@
         <Button
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:visibility="@{profileViewModel.lvVisibilityOpenP2PChat}"
+            android:text="open p2p chat"
+            android:onClick="@{(v) -> profileViewModel.onClickOpenP2PChat()}"
+            />
+
+        <Button
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
             android:visibility="@{profileViewModel.lvVisibilitySendFriendRequest}"
             android:text="send friend request"
             android:onClick="@{(v) -> profileViewModel.onClickSendFriendRequest()}"
             />
+
+
 
 
         <ProgressBar

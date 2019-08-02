@@ -5,5 +5,6 @@ import java.io.Serializable;
 public enum ObjectType implements Serializable {
      EVENT
     ,SETTING
+    ,REQUEST_IP
 }
 

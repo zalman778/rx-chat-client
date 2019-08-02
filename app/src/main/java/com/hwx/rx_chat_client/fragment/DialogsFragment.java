@@ -1,5 +1,6 @@
 package com.hwx.rx_chat_client.fragment;
 
+import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
@@ -17,7 +18,6 @@ import android.view.ViewGroup;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.adapter.DialogElementAdapter;
 import com.hwx.rx_chat_client.databinding.FragmentMessagesBinding;
-import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.hwx.rx_chat_client.view.dialog.ConversationActivity;
 import com.hwx.rx_chat_client.view.dialog.CreateDialogActivity;
 import com.hwx.rx_chat_client.viewModel.HomeViewModel;
@@ -31,7 +31,7 @@ import io.reactivex.schedulers.Schedulers;
 public class DialogsFragment extends Fragment {
 
     @Inject
-    ViewModelFactory viewModelFactory;
+    public ViewModelProvider.Factory mFactory;
 
     private FragmentMessagesBinding fragmentMessagesBinding;
     private HomeViewModel homeViewModel;
@@ -53,7 +53,7 @@ public class DialogsFragment extends Fragment {
 
 
         View view = fragmentMessagesBinding.getRoot();
-        homeViewModel = ViewModelProviders.of(getActivity(), viewModelFactory).get(HomeViewModel.class);
+        homeViewModel = ViewModelProviders.of(getActivity(), mFactory).get(HomeViewModel.class);
         fragmentMessagesBinding.setHomeViewModel(homeViewModel);
         fragmentMessagesBinding.setLifecycleOwner(this);
 

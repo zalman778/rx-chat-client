@@ -1,10 +1,17 @@
 package com.hwx.rx_chat_client.view.dialog;
 
+import android.app.Activity;
+import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -18,27 +25,34 @@ import com.hwx.rx_chat.common.entity.rx.RxMessage;
 import com.hwx.rx_chat.common.object.rx.types.EventType;
 import com.hwx.rx_chat.common.object.rx.types.ObjectType;
 import com.hwx.rx_chat_client.R;
-import com.hwx.rx_chat_client.RxChatApplication;
 import com.hwx.rx_chat_client.adapter.ConversationElementAdapter;
 import com.hwx.rx_chat_client.adapter.misc.ItemTouchHelperCallback;
+import com.hwx.rx_chat_client.background.service.RxService;
 import com.hwx.rx_chat_client.databinding.ActivityConversationBinding;
-import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.hwx.rx_chat_client.view.friend.ProfileActivity;
 import com.hwx.rx_chat_client.viewModel.conversation.ConversationViewModel;
 
 import javax.inject.Inject;
 
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasActivityInjector;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class ConversationActivity extends AppCompatActivity {
+public class ConversationActivity extends AppCompatActivity implements HasActivityInjector {
+
+    @Inject
+    public ViewModelProvider.Factory mFactory;
+
+    @Inject
+    DispatchingAndroidInjector<Activity> activityDispatchingAndroidInjector;
 
     //private static final String EXTRA_MESSAGES_LIST = "EXTRA_MESSAGES_LIST";
     private static final String EXTRA_DIALOG_ID = "EXTRA_DIALOG_ID";
+    private static final String EXTRA_IS_P2P_MODE = "EXTRA_IS_P2P_MODE";
 
-    @Inject
-    ViewModelFactory viewModelFactory;
 
     private ConversationViewModel conversationViewModel;
     private ActivityConversationBinding activityConversationBinding;
@@ -51,19 +65,67 @@ public class ConversationActivity extends AppCompatActivity {
     private String currentUserId;
     private ItemTouchHelper mItemTouchHelper;
 
+    private RxService rxService;
+    private boolean isRxServiceBounded;
+
+    private boolean isP2Pmode = false;
+
+
+    @Override
+    public AndroidInjector<Activity> activityInjector() {
+        return activityDispatchingAndroidInjector;
+    }
+
+    private ServiceConnection rxServiceConnection = new ServiceConnection() {
+        public void onServiceConnected(
+                ComponentName className
+                , IBinder service
+        ) {
+            rxService = ((RxService.RxServiceBinder) service).getService();
+            isRxServiceBounded = true;
+        }
+
+        public void onServiceDisconnected(ComponentName arg0) {
+            isRxServiceBounded = false;
+        }
+    };
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        ((RxChatApplication) getApplication()).getAppComponent().doInjectConversationActivity(this);
+        Intent rxServiceIntent = new Intent(this, RxService.class);
+        bindService(rxServiceIntent, rxServiceConnection, 0);
+
+        Log.w("AVX", "87: service is"+(rxService == null ? "yres" : "no"));
+
         initDataBinding();
 
-        currentUserName = getApplicationContext().getSharedPreferences("localPref", 0).getString("username", "");
-        currentUserId = getApplicationContext().getSharedPreferences("localPref", 0).getString("user_id", "");
+
+        //delayed with 1000ms, due to need some time to bind service
+        Handler handler = new Handler();
+        handler.postDelayed(() -> {
+            conversationViewModel.setRxService(rxService);
+
+        }, 1000);
+
+
+
+
+        SharedPreferences preferences = getApplicationContext().getSharedPreferences("localPref", 0);
+        currentUserName = preferences.getString("username", "");
+        currentUserId = preferences.getString("user_id", "");
 
         initRecyclerViewAdapter();
         subscribePublishers();
+
+
+
+
     }
+
+    
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -76,7 +138,6 @@ public class ConversationActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.btnDialogOptions:
-                //startActivity(DialogProfileActivity.getIntent(this, "0a"));
                 conversationViewModel.onClickDialogOptions();
                 return true;
             default:
@@ -148,7 +209,7 @@ public class ConversationActivity extends AppCompatActivity {
                                         Log.i("AVX","got rx event with mesage:"+rxObject.getMessage().getId()+" "+rxObject.getMessage().getValue());
                                         conversationViewModel.getUniqueMessagesIdSet().add(rxObject.getMessage().getId());
 
-                                        //right way, but rethink!
+                                        //right way, but not working
 //                        conversationElementAdapter.getMessagesList().add(rxObject.getMessage());
 //                        conversationElementAdapter.notifyItemInserted(conversationElementAdapter.getMessagesList().size());
 //                        linearLayoutManager.scrollToPosition(conversationElementAdapter.getMessagesList().size()-1);
@@ -243,6 +304,7 @@ public class ConversationActivity extends AppCompatActivity {
                         }, e-> Log.e("AVX", "error on req", e))
         );
 
+        //событие нажатия открытия страницы информации о диалоге
         compositeDisposable.add(
             conversationViewModel
                     .getPsDialogInfoAction()
@@ -258,14 +320,20 @@ public class ConversationActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
+
+        if (isRxServiceBounded)
+            unbindService(rxServiceConnection);
+
         compositeDisposable.clear();
     }
 
     private void initDataBinding() {
-        conversationViewModel = ViewModelProviders.of(this, viewModelFactory).get(ConversationViewModel.class);
+        conversationViewModel = ViewModelProviders.of(this, mFactory).get(ConversationViewModel.class);
 
         //recieving extra data
         String idDialog = getIntent().getStringExtra(EXTRA_DIALOG_ID);
+        isP2Pmode = getIntent().getBooleanExtra(EXTRA_IS_P2P_MODE, false);
+
         conversationViewModel.setIdDialog(idDialog);
 
         activityConversationBinding = DataBindingUtil.setContentView(this, R.layout.activity_conversation);
@@ -278,4 +346,6 @@ public class ConversationActivity extends AppCompatActivity {
         intent.putExtra(EXTRA_DIALOG_ID, dialogId);
         return intent;
     }
+
+
 }

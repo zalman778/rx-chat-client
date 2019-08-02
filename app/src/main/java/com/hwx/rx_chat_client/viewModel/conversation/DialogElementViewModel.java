@@ -16,6 +16,8 @@ import com.squareup.picasso.Picasso;
 import java.text.SimpleDateFormat;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import io.reactivex.disposables.CompositeDisposable;
 
 public class DialogElementViewModel extends ViewModel {
@@ -36,6 +38,7 @@ public class DialogElementViewModel extends ViewModel {
     //TODO fix memory leak!
     private static Picasso staticPicasso;
 
+    @Inject
     public DialogElementViewModel(DialogResponse dialogResponse
             , Map<String, String> headersMap
             , ChatRepository chatRepository

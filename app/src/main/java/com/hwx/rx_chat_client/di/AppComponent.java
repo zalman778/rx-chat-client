@@ -1,28 +1,31 @@
 package com.hwx.rx_chat_client.di;
 
-import com.hwx.rx_chat_client.view.dialog.ConversationActivity;
-import com.hwx.rx_chat_client.view.HomeActivity;
-import com.hwx.rx_chat_client.view.LoginActivity;
-import com.hwx.rx_chat_client.view.SignupActivity;
-import com.hwx.rx_chat_client.view.dialog.CreateDialogActivity;
-import com.hwx.rx_chat_client.view.dialog.DialogProfileActivity;
-import com.hwx.rx_chat_client.view.friend.AddFriendActivity;
-import com.hwx.rx_chat_client.view.friend.ProfileActivity;
+import com.hwx.rx_chat_client.RxChatApplication;
 
 import javax.inject.Singleton;
 
+import dagger.BindsInstance;
 import dagger.Component;
+import dagger.android.AndroidInjector;
+import dagger.android.support.AndroidSupportInjectionModule;
 
-@Component(modules = {UtilsModule.class})
+@Component(modules = {
+        UtilsModule.class,
+        ServicesBuilder.class,
+        AndroidSupportInjectionModule.class,
+        ActivityBuilder.class,
+        ViewModelModule.class
+})
 @Singleton
-public interface AppComponent {
+public interface AppComponent extends AndroidInjector<RxChatApplication> {
 
-    void doInjectLoginActivity(LoginActivity loginActivity);
-    void doInjectHomeActivity(HomeActivity mainActivity);
-    void doInjectConversationActivity(ConversationActivity conversationActivity);
-    void doInjectSignupActivity(SignupActivity signupActivity);
-    void doInjectAddFriendActivity(AddFriendActivity addFriendActivity);
-    void doInjectProfileActivity(ProfileActivity profileActivity);
-    void doInjectCreateDialogActivity(CreateDialogActivity createDialogActivity);
-    void doInjectDialogProfileActivity(DialogProfileActivity dialogProfileActivity);
+    @Component.Builder
+    interface Builder {
+        @BindsInstance
+        Builder application(RxChatApplication application);
+        Builder utilsModule(UtilsModule um);
+        AppComponent build();
+    }
+
+    void inject(RxChatApplication rxChatApplication);
 }

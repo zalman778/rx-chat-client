@@ -9,6 +9,8 @@ import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 
+import javax.inject.Inject;
+
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
@@ -32,6 +34,7 @@ public class SignupViewModel extends ViewModel {
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
+    @Inject
     public SignupViewModel(
               ChatRepository chatRepository
             , ResourceProvider resourceProvider

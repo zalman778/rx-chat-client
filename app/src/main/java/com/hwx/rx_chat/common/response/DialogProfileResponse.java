@@ -30,6 +30,10 @@ public class DialogProfileResponse implements Serializable {
     @JsonProperty("creator_id")
     private String creatorId;
 
+    @SerializedName("creator_username")
+    @JsonProperty("creator_username")
+    private String creatorUsername;
+
     public String getDialogId() {
         return dialogId;
     }
@@ -70,6 +74,14 @@ public class DialogProfileResponse implements Serializable {
         this.creatorId = creatorId;
     }
 
+    public String getCreatorUsername() {
+        return creatorUsername;
+    }
+
+    public void setCreatorUsername(String creatorUsername) {
+        this.creatorUsername = creatorUsername;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -79,11 +91,12 @@ public class DialogProfileResponse implements Serializable {
                 Objects.equals(dialogName, that.dialogName) &&
                 Objects.equals(chatImage, that.chatImage) &&
                 Objects.equals(friendList, that.friendList) &&
-                Objects.equals(creatorId, that.creatorId);
+                Objects.equals(creatorId, that.creatorId) &&
+                Objects.equals(creatorUsername, that.creatorUsername);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dialogId, dialogName, chatImage, friendList, creatorId);
+        return Objects.hash(dialogId, dialogName, chatImage, friendList, creatorId, creatorUsername);
     }
 }

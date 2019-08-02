@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -46,6 +48,7 @@ public class CreateDialogViewModel extends ViewModel {
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private Map<String, String> headersMap = new HashMap<>();
 
+    @Inject
     public CreateDialogViewModel(DialogRepository dialogRepository, ChatRepository chatRepository, SharedPreferencesProvider sharedPreferencesProvider, Picasso picasso) {
         this.chatRepository = chatRepository;
         this.dialogRepository = dialogRepository;

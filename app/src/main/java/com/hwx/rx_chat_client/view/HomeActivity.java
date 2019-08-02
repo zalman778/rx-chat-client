@@ -1,14 +1,18 @@
 package com.hwx.rx_chat_client.view;
 
 import android.app.Activity;
+import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -16,36 +20,58 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 
+import com.hwx.rx_chat.common.object.rx.RxObject;
+import com.hwx.rx_chat.common.object.rx.types.ObjectType;
+import com.hwx.rx_chat.common.object.rx.types.SettingType;
 import com.hwx.rx_chat_client.R;
-import com.hwx.rx_chat_client.RxChatApplication;
+import com.hwx.rx_chat_client.background.service.RxService;
 import com.hwx.rx_chat_client.databinding.ActivityHomeBinding;
-import com.hwx.rx_chat_client.util.ViewModelFactory;
 import com.hwx.rx_chat_client.viewModel.HomeViewModel;
 
 import javax.inject.Inject;
 
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.support.HasSupportFragmentInjector;
 import in.mayanknagwanshi.imagepicker.ImageSelectActivity;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity implements HasSupportFragmentInjector {
 
     @Inject
-    ViewModelFactory viewModelFactory;
+    DispatchingAndroidInjector<Fragment> fragmentDispatchingAndroidInjector;
+
+    @Override
+    public AndroidInjector<Fragment> supportFragmentInjector() {
+        return fragmentDispatchingAndroidInjector;
+    }
+
+    @Inject
+    public ViewModelProvider.Factory mFactory;
 
     private HomeViewModel homeViewModel;
     private ActivityHomeBinding activityHomeBinding;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
+
+    private RxService rxService;
+    private boolean isRxServiceBounded;
+
+    String userId;
+
+    private SharedPreferences preferences;
+
+    private static final Integer REQUEST_CODE_IMAGE_SELECT = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        SharedPreferences pref = getApplicationContext().getSharedPreferences("localPref", 0); // 0 - for private mode
+        preferences = getApplicationContext().getSharedPreferences("localPref", 0); // 0 - for private mode
 
-        boolean loggedIn = pref.getBoolean("logged_in", false);
+        boolean loggedIn = preferences.getBoolean("logged_in", false);
 
         //если авторизации не было, то прыгаем на активити авторизации
         if (!loggedIn) {
@@ -54,18 +80,58 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         //иначе грузим меню и все остальное
-        ((RxChatApplication) getApplication()).getAppComponent().doInjectHomeActivity(this);
         initDataBinding();
         subscribePublishers();
+
+        //initializing client-server rxService
+        Intent rxServiceIntent = new Intent(this, RxService.class);
+
+        startService(rxServiceIntent);
+
+        //binding service
+        userId = preferences.getString("user_id", "");
+        bindService(rxServiceIntent, rxServiceConnection, 0);
+
+
+
+        //delayed with 1000ms, due to need some time to bind service
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(this::sendRxUserIdForBackground, 1000);
+
     }
+
+    private void sendRxUserIdForBackground() {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(() -> {
+
+            RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.ID_USER_FOR_BACKGROUND, userId, null);
+            rxService.sendRxObject(rxObject);
+
+            //sendRxUserIdForBackground();
+        }, 2000);
+    }
+
+    private ServiceConnection rxServiceConnection = new ServiceConnection() {
+        public void onServiceConnected(
+                  ComponentName className
+                , IBinder service
+        ) {
+            rxService = ((RxService.RxServiceBinder) service).getService();
+            isRxServiceBounded = true;
+        }
+
+        public void onServiceDisconnected(ComponentName arg0) {
+            isRxServiceBounded = false;
+        }
+    };
+
 
 
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Log.i("AVX", "got result "+resultCode+"; "+ data == null ? "emp" : "non");
-        if (requestCode == 1213 && resultCode == Activity.RESULT_OK) {
+        if (requestCode == REQUEST_CODE_IMAGE_SELECT && resultCode == Activity.RESULT_OK) {
             String filePath = data.getStringExtra(ImageSelectActivity.RESULT_FILE_PATH);
 
             homeViewModel.sendNewProfileAvatar(filePath);
@@ -85,7 +151,8 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void initDataBinding() {
-        homeViewModel = ViewModelProviders.of(this, viewModelFactory).get(HomeViewModel.class);
+        homeViewModel = ViewModelProviders.of(this, mFactory).get(HomeViewModel.class);
+
         activityHomeBinding = DataBindingUtil.setContentView(this, R.layout.activity_home);
         activityHomeBinding.setLifecycleOwner(this);
         activityHomeBinding.setVm(homeViewModel);
@@ -100,8 +167,7 @@ public class HomeActivity extends AppCompatActivity {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(integer -> {
                             Log.d("avx", "onChanged:logoutListenner");
-                            SharedPreferences pref1 = getApplicationContext().getSharedPreferences("localPref", 0);
-                            SharedPreferences.Editor editor = pref1.edit();
+                            SharedPreferences.Editor editor = preferences.edit();
                             editor.putString("user_id", null);
                             editor.putString("username", null);
                             editor.putString("token", null);
@@ -142,18 +208,27 @@ public class HomeActivity extends AppCompatActivity {
                             intent.putExtra(ImageSelectActivity.FLAG_COMPRESS, false);//default is true
                             intent.putExtra(ImageSelectActivity.FLAG_CAMERA, true);//default is true
                             intent.putExtra(ImageSelectActivity.FLAG_GALLERY, true);//default is true
-                            startActivityForResult(intent, 1213);
+                            startActivityForResult(intent, REQUEST_CODE_IMAGE_SELECT);
 
                         })
         );
 
-        //обработка выбора фрагмента
-        homeViewModel.getLdTabSwitched().observe(this, this::replaceFragment);
+
+        compositeDisposable.add(
+                homeViewModel
+                        .getPsTabSwitched()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(this::replaceFragment)
+        );
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        unbindService(rxServiceConnection);
         compositeDisposable.dispose();
     }
+
+
 }

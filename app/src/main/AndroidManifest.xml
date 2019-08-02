@@ -17,7 +17,21 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
-        <activity android:name=".view.dialog.DialogProfileActivity"></activity>
+        <service
+            android:name=".p2p.service.RxP2PService"
+            android:enabled="true"
+            android:exported="true">
+
+        </service>
+
+        <service
+            android:name=".background.service.RxService"
+            android:enabled="true"
+            android:exported="true">
+
+        </service>
+
+        <activity android:name=".view.dialog.DialogProfileActivity" />
         <activity android:name=".view.dialog.CreateDialogActivity" />
         <activity android:name=".view.friend.ProfileActivity" />
         <activity android:name=".view.friend.AddFriendActivity" />
