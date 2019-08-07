@@ -11,7 +11,8 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         buildConfigField 'String', "ClientCertPass", CLIENT_CERT_PASS
         buildConfigField 'String', "ClientNettyKeystorePass", CLEINT_NETTY_KEYSTORE_PASS
-        buildConfigField 'String', "ServerIpAddr", SERVER_IP_ADDR
+        buildConfigField 'String', "ServerIpAddrForEmulator", SERVER_IP_ADDR_FOR_EMULATOR
+        buildConfigField 'String', "ServerIpAddrReal", SERVER_IP_ADDR_REAL
     }
     buildTypes {
         release {
@@ -19,7 +20,8 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField 'String', "ClientCertPass", CLIENT_CERT_PASS
             buildConfigField 'String', "ClientNettyKeystorePass", CLEINT_NETTY_KEYSTORE_PASS
-            buildConfigField 'String', "ServerIpAddr", SERVER_IP_ADDR
+            buildConfigField 'String', "ServerIpAddrForEmulator", SERVER_IP_ADDR_FOR_EMULATOR
+            buildConfigField 'String', "ServerIpAddrReal", SERVER_IP_ADDR_REAL
         }
     }
     dataBinding {

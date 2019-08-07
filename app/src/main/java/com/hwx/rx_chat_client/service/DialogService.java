@@ -2,7 +2,6 @@ package com.hwx.rx_chat_client.service;
 
 import com.hwx.rx_chat.common.response.DefaultResponse;
 import com.hwx.rx_chat.common.response.DialogProfileResponse;
-import com.hwx.rx_chat_client.Configuration;
 
 import java.util.List;
 import java.util.Map;
@@ -23,9 +22,10 @@ public interface DialogService {
     );
 
     @FormUrlEncoded
-    @POST(Configuration.URL_DIALOGS_CREATE)
+    @POST
     Observable<DefaultResponse> createDialog(
-              @HeaderMap Map<String, String> headers
+              @Url String url
+            , @HeaderMap Map<String, String> headers
             , @Field("dialogCaption") String dialogCaption
             , @Field("pickedProfiles") List<String> pickedProfiles
     );

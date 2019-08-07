@@ -1,7 +1,6 @@
 package com.hwx.rx_chat_client.service;
 
 import com.hwx.rx_chat.common.response.DefaultResponse;
-import com.hwx.rx_chat_client.Configuration;
 
 import java.util.Map;
 
@@ -16,16 +15,18 @@ import retrofit2.http.Url;
 public interface FriendService {
 
     @FormUrlEncoded
-    @POST(Configuration.URL_FRIENDS_REQUEST_ACCEPT)
+    @POST
     Observable<DefaultResponse> acceptFriendRequest(
-              @HeaderMap Map<String, String> headers
+              @Url String url
+            , @HeaderMap Map<String, String> headers
             , @Field("requestId") String requestId
     );
 
     @FormUrlEncoded
-    @POST(Configuration.URL_FRIENDS_REQUEST_REJECT)
+    @POST
     Observable<DefaultResponse> rejectFriendRequest(
-              @HeaderMap Map<String, String> headers
+              @Url String url
+            , @HeaderMap Map<String, String> headers
             , @Field("requestId") String requestId
     );
 

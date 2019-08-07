@@ -10,7 +10,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwx.rx_chat.common.entity.rx.RxMessage;
 import com.hwx.rx_chat.common.object.rx.RxObject;
 import com.hwx.rx_chat.common.object.rx.types.ObjectType;
@@ -20,6 +19,7 @@ import com.hwx.rx_chat.common.response.DialogResponse;
 import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
+import com.hwx.rx_chat_client.background.p2p.service.RxP2PService;
 import com.hwx.rx_chat_client.fragment.DialogsFragment;
 import com.hwx.rx_chat_client.fragment.FriendsFragment;
 import com.hwx.rx_chat_client.fragment.HomeFragment;
@@ -39,7 +39,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import io.netty.handler.ssl.SslContext;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -62,6 +61,8 @@ public class HomeViewModel extends ViewModel {
 
     //TODO memory lead, fix it...
     private Picasso picasso;
+
+    private RxP2PService rxP2PService;
 
     private static Picasso staticPicasso;
 
@@ -127,7 +128,7 @@ public class HomeViewModel extends ViewModel {
 
     ) {
         this.chatRepository = chatRepository;
-        Log.w("AVX", "inside homeViewModel 2 contructor: chatRepo is"+(chatRepository == null));
+        //Log.w("AVX", "inside homeViewModel 2 contructor: chatRepo is"+(chatRepository == null));
         this.friendRepository = friendRepository;
         this.resourceProvider = resourceProvider;
         this.sharedPreferencesProvider = sharedPreferencesProvider;
@@ -243,6 +244,26 @@ public class HomeViewModel extends ViewModel {
 
     public PublishSubject<RxMessage> getPsRecievedRxMessageAction() {
         return psRecievedRxMessageAction;
+    }
+
+    public void setRxP2PService(RxP2PService rxP2PService) {
+        this.rxP2PService = rxP2PService;
+        subscribeRxP2pPublishers();
+    }
+
+    private void subscribeRxP2pPublishers() {
+        compositeDisposable.add(
+            rxP2PService
+                .getRxObj()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(rxP2PObject -> {
+                    if (rxP2PObject.getObjectType().equals(com.hwx.rx_chat_client.background.p2p.object.type.ObjectType.MESSAGE)) {
+                        RxMessage rxMessage = rxP2PObject.getMessage();
+                        Log.w("AVX", "got message from user "+rxMessage.toString());
+                    }
+                })
+        );
     }
 
     public Picasso getPicasso() {

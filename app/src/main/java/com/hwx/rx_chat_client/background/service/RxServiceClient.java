@@ -1,4 +1,4 @@
-package com.hwx.rx_chat_client.rsocket;
+package com.hwx.rx_chat_client.background.service;
 
 import android.util.Log;
 
@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwx.rx_chat.common.object.rx.RxObject;
 import com.hwx.rx_chat_client.Configuration;
+import com.hwx.rx_chat_client.rsocket.ReconnectingRSocket;
 
 import java.io.IOException;
 import java.time.Duration;

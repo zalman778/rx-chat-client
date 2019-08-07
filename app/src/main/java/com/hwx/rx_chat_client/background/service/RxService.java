@@ -2,21 +2,18 @@ package com.hwx.rx_chat_client.background.service;
 
 import android.content.Intent;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.util.Log;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwx.rx_chat.common.object.rx.RxObject;
-import com.hwx.rx_chat.common.object.rx.types.ObjectType;
-import com.hwx.rx_chat.common.object.rx.types.SettingType;
-import com.hwx.rx_chat_client.rsocket.RxServiceClient;
 
 import javax.inject.Inject;
 
 import dagger.android.DaggerService;
 import io.netty.handler.ssl.SslContext;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 
 /*
@@ -35,8 +32,6 @@ public class RxService extends DaggerService {
 
     @Inject
     SslContext sslContext;
-
-
 
     public class RxServiceBinder extends Binder {
         public RxService getService() {
@@ -68,6 +63,15 @@ public class RxService extends DaggerService {
         rxServiceClient.requestChannel();
 
         Log.i(LOG_TAG, "RxService created rxClient");
+
+        rxServiceClient
+                .getPsRxMessage()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(rxObject -> {
+            Log.w("AVX", "got rxObj in servie: "+rxObject);
+        });
+
 
     }
 

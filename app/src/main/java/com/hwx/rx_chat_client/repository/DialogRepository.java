@@ -2,6 +2,7 @@ package com.hwx.rx_chat_client.repository;
 
 import com.hwx.rx_chat.common.response.DefaultResponse;
 import com.hwx.rx_chat.common.response.DialogProfileResponse;
+import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.service.DialogService;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class DialogRepository {
     }
 
     public Observable<DefaultResponse> createDialog(Map<String, String> headersMap, String dialogCaption, List<String> pickedProfiles) {
-        return dialogService.createDialog(headersMap, dialogCaption, pickedProfiles);
+        return dialogService.createDialog(Configuration.URL_DIALOGS_CREATE, headersMap, dialogCaption, pickedProfiles);
     }
 
     public Observable<DialogProfileResponse> getDialogInfo(String url,  Map<String, String> headersMap) {

@@ -1,36 +1,40 @@
-package com.hwx.rx_chat_client.p2p.service;
+package com.hwx.rx_chat_client.background.p2p.object;
 
 import android.util.Log;
 
-import com.hwx.rx_chat_client.Configuration;
-import com.hwx.rx_chat_client.p2p.RSocketP2PObjectController;
-import com.hwx.rx_chat_client.util.NetworkUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.reactivestreams.Publisher;
 
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 
-import javax.inject.Inject;
-
-import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.reactivex.processors.PublishProcessor;
+import io.reactivex.subjects.PublishSubject;
 import io.rsocket.AbstractRSocket;
 import io.rsocket.ConnectionSetupPayload;
 import io.rsocket.Payload;
 import io.rsocket.RSocket;
 import io.rsocket.RSocketFactory;
 import io.rsocket.transport.netty.server.CloseableChannel;
-import io.rsocket.transport.netty.server.WebsocketServerTransport;
+import io.rsocket.transport.netty.server.TcpServerTransport;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.server.HttpServer;
-import reactor.netty.tcp.TcpServer;
 
-public class RSocketP2PController {
+import static com.hwx.rx_chat_client.background.p2p.service.RxP2PService.DEFAULT_PORT;
 
-    @Inject
-    RSocketP2PController(RxP2PService service) {
-        /*constructor stuff*/
+public class RxP2PController {
+
+    private ObjectMapper objectMapper;
+    private PublishSubject<RxP2PObject> rxObj;
+
+    public RxP2PController(
+              ObjectMapper objectMapper
+            , PublishSubject<RxP2PObject> rxObj
+    ) {
+        this.rxObj = rxObj;
+        this.objectMapper = objectMapper;
     }
 
     private Mono<CloseableChannel> closeable = initRSocket();
@@ -44,21 +48,22 @@ public class RSocketP2PController {
 
     private Mono<CloseableChannel> initRSocket() {
 
-        Log.w("AVX", NetworkUtil.getIPAddress(true) + "; "+ Configuration.RSOCKET_CLIENT_SERVER_PORT);
+        Log.w("AVX", "creating P2P server...");
 
-        TcpServer tcpServer = TcpServer.create()
-                .addressSupplier(() -> new InetSocketAddress(NetworkUtil.getIPAddress(true)
-                        , Configuration.RSOCKET_CLIENT_SERVER_PORT));
+//        TcpServer tcpServer = TcpServer
+//                .create()
+//                .port(DEFAULT_PORT);
 
-        HttpServer httpServer = HttpServer.from(tcpServer);
+
+//        HttpServer httpServer = HttpServer.from(tcpServer);
         return RSocketFactory
                 .receive()
 
                 .acceptor((a, b)-> handler(a, b))
-                .transport(
+                .transport(TcpServerTransport.create(DEFAULT_PORT))
                         // TcpServerTransport.create("localhost", PORT)
-                        WebsocketServerTransport.create(httpServer)
-                )
+//                        WebsocketServerTransport.create(httpServer)
+//                )
                 .start();
     }
 
@@ -80,7 +85,7 @@ public class RSocketP2PController {
             field.setAccessible(true);
             newObj = field.get(newObj);
 
-            objectClass = newObj.getClass().getSuperclass().getSuperclass().getSuperclass();
+            objectClass = newObj.getClass();
             field = objectClass.getDeclaredField("connection");
             field.setAccessible(true);
             newObj = field.get(newObj);
@@ -89,29 +94,31 @@ public class RSocketP2PController {
             field = objectClass.getDeclaredField("channel");
             field.setAccessible(true);
             newObj = field.get(newObj);
-            EpollSocketChannel epollSocketChannel = (EpollSocketChannel) newObj;
-            remoteSocketAddr = epollSocketChannel.remoteAddress();
+            NioSocketChannel nioSocketChannel = (NioSocketChannel) newObj;
+            remoteSocketAddr = nioSocketChannel.remoteAddress();
 
             Log.w("AVX", "recieved rx connection from "+remoteSocketAddr.toString());
 
-            } catch (IllegalAccessException e) {
-            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            Log.e("AVX", "err rxP2Pcontroller", e);
         } catch (NoSuchFieldException e) {
-            e.printStackTrace();
+            Log.e("AVX", "err2 rxP2Pcontroller", e);
         }
 
         InetSocketAddress finalRemoteSocketAddr = remoteSocketAddr;
+
+        PublishProcessor<RxP2PObject> txObj = PublishProcessor.create();
+
+
+
         return Mono.just(new AbstractRSocket() {
 
-
-//            RSocketP2PObjectController rSocketP2PObjectController = new RSocketP2PObjectController(
-//                    mapper, rxObjectHandler, finalRemoteSocketAddr
-//            );
-            RSocketP2PObjectController rSocketP2PObjectController = new RSocketP2PObjectController();
+            RxP2PObjectController rSocketP2PObjectController = new RxP2PObjectController(objectMapper, txObj, rxObj);
 
             //2directional - sending in both ways:
             @Override
             public Flux<Payload> requestChannel(Publisher<Payload> payloads) {
+                Log.w("AVX", "P2P: got requestChannel from "+finalRemoteSocketAddr.getHostName()+":"+finalRemoteSocketAddr.getPort());
                 Flux.from(payloads)
                         .subscribe(rSocketP2PObjectController::accept);
                 return rSocketP2PObjectController.getReactiveFlux();

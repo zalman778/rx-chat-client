@@ -8,7 +8,6 @@ import com.hwx.rx_chat.common.response.DialogResponse;
 import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat.common.response.LoginResponse;
 import com.hwx.rx_chat.common.response.UserDetailsResponse;
-import com.hwx.rx_chat_client.Configuration;
 
 import java.util.List;
 import java.util.Map;
@@ -29,22 +28,25 @@ import retrofit2.http.Url;
 public interface ChatService {
 
     @FormUrlEncoded
-    @POST(Configuration.URL_LOGIN_REQUEST)
+    @POST
     Observable<LoginResponse> authorize(
-              @Field("username") String username
+              @Url String url
+            , @Field("username") String username
             , @Field("passwordHash") String password
     );
 
     @FormUrlEncoded
-    @POST(Configuration.URL_LOGIN_REQUEST)
+    @POST
     Observable<Response<LoginResponse>> authorizeWithResponse(
-              @Field("username") String username
+              @Url String url
+            , @Field("username") String username
             , @Field("passwordHash") String password
     );
 
-    @POST(Configuration.URL_SIGNUP_USER)
+    @POST
     Observable<DefaultResponse> signUpUser(
-            @Body SignupRequest signupRequest
+              @Url String url
+            , @Body SignupRequest signupRequest
     );
 
     @GET
@@ -77,16 +79,18 @@ public interface ChatService {
             , @HeaderMap Map<String, String> headers
     );
 
-    @POST(Configuration.URL_UPLOAD_PROFILE_PIC)
+    @POST
     @Multipart
     Observable<DefaultResponse> updateProfilePic(
-             @HeaderMap Map<String, String> headers
-           , @Part MultipartBody.Part img
+              @Url String url
+            , @HeaderMap Map<String, String> headers
+            , @Part MultipartBody.Part img
     );
 
-    @POST(Configuration.URL_UPLOAD_PROFILE_BIO)
+    @POST
     Observable<DefaultResponse> updateProfileBio(
-              @HeaderMap Map<String, String> headers
+              @Url String url
+            , @HeaderMap Map<String, String> headers
             , @Body ProfileInfoUpdateRequest profileInfoUpdateRequest
     );
 }

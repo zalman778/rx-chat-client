@@ -8,6 +8,7 @@ import com.hwx.rx_chat.common.response.DialogResponse;
 import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat.common.response.LoginResponse;
 import com.hwx.rx_chat.common.response.UserDetailsResponse;
+import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.service.ChatService;
 
 import java.util.List;
@@ -26,15 +27,15 @@ public class ChatRepository {
     }
 
     public Observable<LoginResponse> authorize(String username, String password) {
-        return chatService.authorize(username, password);
+        return chatService.authorize(Configuration.URL_LOGIN_REQUEST, username, password);
     }
 
     public Observable<Response<LoginResponse>> authorizeWithResponse(String username, String password) {
-        return chatService.authorizeWithResponse(username, password);
+        return chatService.authorizeWithResponse(Configuration.URL_LOGIN_REQUEST, username, password);
     }
 
     public Observable<DefaultResponse> signUpUser(SignupRequest signupRequest) {
-        return chatService.signUpUser(signupRequest);
+        return chatService.signUpUser(Configuration.URL_SIGNUP_USER, signupRequest);
     }
 
     public Observable<List<FriendResponse>> searchUsers(String url, Map<String, String> headersMap) {
@@ -60,11 +61,11 @@ public class ChatRepository {
 
 
     public Observable<DefaultResponse> updateProfilePic(Map<String, String> headersMap, MultipartBody.Part img) {
-        return chatService.updateProfilePic(headersMap, img);
+        return chatService.updateProfilePic(Configuration.URL_UPLOAD_PROFILE_PIC, headersMap, img);
     }
 
     public Observable<DefaultResponse> updateProfileBio(Map<String, String> headersMap, ProfileInfoUpdateRequest profileInfoUpdateRequest) {
-        return chatService.updateProfileBio(headersMap, profileInfoUpdateRequest);
+        return chatService.updateProfileBio(Configuration.URL_UPLOAD_PROFILE_BIO, headersMap, profileInfoUpdateRequest);
     }
 
 

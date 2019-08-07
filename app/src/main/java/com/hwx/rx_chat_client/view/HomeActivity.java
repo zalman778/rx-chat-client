@@ -24,6 +24,7 @@ import com.hwx.rx_chat.common.object.rx.RxObject;
 import com.hwx.rx_chat.common.object.rx.types.ObjectType;
 import com.hwx.rx_chat.common.object.rx.types.SettingType;
 import com.hwx.rx_chat_client.R;
+import com.hwx.rx_chat_client.background.p2p.service.RxP2PService;
 import com.hwx.rx_chat_client.background.service.RxService;
 import com.hwx.rx_chat_client.databinding.ActivityHomeBinding;
 import com.hwx.rx_chat_client.viewModel.HomeViewModel;
@@ -58,6 +59,9 @@ public class HomeActivity extends AppCompatActivity implements HasSupportFragmen
     private RxService rxService;
     private boolean isRxServiceBounded;
 
+    private RxP2PService rxP2PService;
+    private boolean isRxP2PServiceBounded;
+
     String userId;
 
     private SharedPreferences preferences;
@@ -67,7 +71,7 @@ public class HomeActivity extends AppCompatActivity implements HasSupportFragmen
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home);
+        //setContentView(R.layout.activity_home);
 
         preferences = getApplicationContext().getSharedPreferences("localPref", 0); // 0 - for private mode
 
@@ -85,19 +89,28 @@ public class HomeActivity extends AppCompatActivity implements HasSupportFragmen
 
         //initializing client-server rxService
         Intent rxServiceIntent = new Intent(this, RxService.class);
-
         startService(rxServiceIntent);
+        bindService(rxServiceIntent, rxServiceConnection, 0);
+
+        Intent rxP2PServiceIntent = new Intent(this, RxP2PService.class);
+        startService(rxP2PServiceIntent);
+        bindService(rxP2PServiceIntent, rxP2PServiceConnection, 0);
 
         //binding service
         userId = preferences.getString("user_id", "");
-        bindService(rxServiceIntent, rxServiceConnection, 0);
+
 
 
 
         //delayed with 1000ms, due to need some time to bind service
         Handler handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(this::sendRxUserIdForBackground, 1000);
+        handler.postDelayed(this::onServiceBoundedAction, 2000);
 
+    }
+
+    private void onServiceBoundedAction() {
+        homeViewModel.setRxP2PService(rxP2PService);
+        sendRxUserIdForBackground();
     }
 
     private void sendRxUserIdForBackground() {
@@ -122,6 +135,20 @@ public class HomeActivity extends AppCompatActivity implements HasSupportFragmen
 
         public void onServiceDisconnected(ComponentName arg0) {
             isRxServiceBounded = false;
+        }
+    };
+
+    private ServiceConnection rxP2PServiceConnection = new ServiceConnection() {
+        public void onServiceConnected(
+                ComponentName className
+                , IBinder service
+        ) {
+            rxP2PService = ((RxP2PService.RxP2PServiceBinder) service).getService();
+            isRxP2PServiceBounded = true;
+        }
+
+        public void onServiceDisconnected(ComponentName arg0) {
+            isRxP2PServiceBounded = false;
         }
     };
 

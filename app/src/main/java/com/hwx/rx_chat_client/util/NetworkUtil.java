@@ -1,11 +1,7 @@
 package com.hwx.rx_chat_client.util;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.util.Log;
 
-import com.hwx.rx_chat_client.BuildConfig;
 import com.hwx.rx_chat_client.Configuration;
 
 import java.io.IOException;
@@ -28,7 +24,7 @@ public class NetworkUtil {
 //        return isConnected;
         try {
             Socket socket = new Socket();
-            SocketAddress socketAddress = new InetSocketAddress(BuildConfig.ServerIpAddr, Configuration.HTTPS_SERVER_PORT);
+            SocketAddress socketAddress = new InetSocketAddress(Configuration.IP, Configuration.HTTPS_SERVER_PORT);
             socket.connect(socketAddress, 2000);
             socket.close();
             isConnected = true;

@@ -98,8 +98,6 @@ public class ConversationActivity extends AppCompatActivity implements HasActivi
         Intent rxServiceIntent = new Intent(this, RxService.class);
         bindService(rxServiceIntent, rxServiceConnection, 0);
 
-        Log.w("AVX", "87: service is"+(rxService == null ? "yres" : "no"));
-
         initDataBinding();
 
 

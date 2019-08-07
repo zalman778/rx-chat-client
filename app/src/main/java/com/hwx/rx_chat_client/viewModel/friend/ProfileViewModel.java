@@ -15,6 +15,7 @@ import com.hwx.rx_chat.common.object.rx.types.EventType;
 import com.hwx.rx_chat.common.object.rx.types.ObjectType;
 import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
+import com.hwx.rx_chat_client.background.p2p.service.RxP2PService;
 import com.hwx.rx_chat_client.background.service.RxService;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.repository.DialogRepository;
@@ -63,6 +64,7 @@ public class ProfileViewModel extends ViewModel {
 
     private MutableLiveData<String> lvProfileRequestResult = new MutableLiveData<>();
     private RxService rxService;
+    private RxP2PService rxP2PService;
 
     @Inject
     public ProfileViewModel(
@@ -94,6 +96,10 @@ public class ProfileViewModel extends ViewModel {
         subscribeRxService();
     }
 
+    public void setRxP2PService(RxP2PService rxP2PService) {
+        this.rxP2PService = rxP2PService;
+    }
+
     private void subscribeRxService() {
         compositeDisposable.add(
                 rxService.getPpRxProcessor()
@@ -103,7 +109,7 @@ public class ProfileViewModel extends ViewModel {
                                 rxObject -> {
                                     if (rxObject.getEventType().equals(EventType.FRIEND_SOCKET_INFO)
                                             && rxObject.getObjectType().equals(ObjectType.EVENT)) {
-                                        actionOpenP2PConverstion((String) rxObject.getValue());
+                                        actionOpenP2PConversation((String) rxObject.getValue(), (String) rxObject.getObjectId());
                                     }
                                     Log.w("AVX", "got rxObj="+rxObject.toString());
                                 }
@@ -111,8 +117,8 @@ public class ProfileViewModel extends ViewModel {
         );
     }
 
-    private void actionOpenP2PConverstion(String profileSocketInfo) {
-
+    private void actionOpenP2PConversation(String profileSocketInfo, String profileId) {
+        rxP2PService.requestChannelByProfileInfo(profileSocketInfo, profileId);
     }
 
     public void setProfileId(String profileId) {

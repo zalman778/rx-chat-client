@@ -1,19 +1,16 @@
 package com.hwx.rx_chat_client.adapter;
 
-import android.arch.lifecycle.LifecycleOwner;
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import com.hwx.rx_chat.common.entity.rx.RxMessage;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.adapter.misc.ItemTouchHelperAdapter;
-import com.hwx.rx_chat_client.databinding.ActivityConversationBinding;
 import com.hwx.rx_chat_client.databinding.ConvItemMessageOtherBinding;
 import com.hwx.rx_chat_client.databinding.ConvItemMessageSelfBinding;
 import com.hwx.rx_chat_client.util.ResourceProvider;

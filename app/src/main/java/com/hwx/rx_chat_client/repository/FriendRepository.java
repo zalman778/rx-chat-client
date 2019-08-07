@@ -1,6 +1,7 @@
 package com.hwx.rx_chat_client.repository;
 
 import com.hwx.rx_chat.common.response.DefaultResponse;
+import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.service.FriendService;
 
 import java.util.Map;
@@ -18,14 +19,14 @@ public class FriendRepository {
               Map<String, String> headers
             , String requestId
     ) {
-        return friendService.acceptFriendRequest(headers, requestId);
+        return friendService.acceptFriendRequest(Configuration.URL_FRIENDS_REQUEST_ACCEPT, headers, requestId);
     }
 
     public Observable<DefaultResponse> rejectFriendRequest(
             Map<String, String> headers
             , String requestId
     ) {
-        return friendService.rejectFriendRequest(headers, requestId);
+        return friendService.rejectFriendRequest(Configuration.URL_FRIENDS_REQUEST_REJECT, headers, requestId);
     }
 
     public Observable<DefaultResponse> createFriendRequest(String url, Map<String, String> headers) {
