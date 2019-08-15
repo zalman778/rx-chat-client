@@ -88,7 +88,7 @@ public class LoginActivity extends AppCompatActivity implements HasActivityInjec
                 //user profile data
                 if (loginResponse.getAvatarUrl() != null)
                     editor.putString("profileAvatarUrl",
-                            Configuration.HTTPS_SERVER_URL +Configuration.IMAGE_PREFIX+ loginResponse.getAvatarUrl()
+                        Configuration.IMAGE_PREFIX+ loginResponse.getAvatarUrl()
                     );
                 editor.putString("profileFirstName", loginResponse.getFirstName());
                 editor.putString("profileLastName", loginResponse.getLastName());

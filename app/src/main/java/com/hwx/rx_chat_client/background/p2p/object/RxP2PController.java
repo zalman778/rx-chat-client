@@ -3,14 +3,19 @@ package com.hwx.rx_chat_client.background.p2p.object;
 import android.util.Log;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hwx.rx_chat_client.background.p2p.object.type.ObjectType;
 
 import org.reactivestreams.Publisher;
 
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.processors.PublishProcessor;
+import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 import io.rsocket.AbstractRSocket;
 import io.rsocket.ConnectionSetupPayload;
@@ -27,14 +32,21 @@ import static com.hwx.rx_chat_client.background.p2p.service.RxP2PService.DEFAULT
 public class RxP2PController {
 
     private ObjectMapper objectMapper;
-    private PublishSubject<RxP2PObject> rxObj;
+//    private PublishSubject<RxP2PObject> rxObj;
+    private String profileId;
+
+    private Map<String, PipeHolder> pipesMap;
 
     public RxP2PController(
               ObjectMapper objectMapper
             , PublishSubject<RxP2PObject> rxObj
+            , String profileId
+            , Map<String, PipeHolder> pipesMap
     ) {
-        this.rxObj = rxObj;
+//        this.rxObj = rxObj;
         this.objectMapper = objectMapper;
+        this.profileId = profileId;
+        this.pipesMap = pipesMap;
     }
 
     private Mono<CloseableChannel> closeable = initRSocket();
@@ -50,22 +62,16 @@ public class RxP2PController {
 
         Log.w("AVX", "creating P2P server...");
 
-//        TcpServer tcpServer = TcpServer
-//                .create()
-//                .port(DEFAULT_PORT);
-
-
-//        HttpServer httpServer = HttpServer.from(tcpServer);
         return RSocketFactory
                 .receive()
 
                 .acceptor((a, b)-> handler(a, b))
                 .transport(TcpServerTransport.create(DEFAULT_PORT))
-                        // TcpServerTransport.create("localhost", PORT)
-//                        WebsocketServerTransport.create(httpServer)
-//                )
                 .start();
     }
+
+
+
 
     private Mono<RSocket> handler(ConnectionSetupPayload a, RSocket b) {
         InetSocketAddress remoteSocketAddr = null;
@@ -108,12 +114,12 @@ public class RxP2PController {
         InetSocketAddress finalRemoteSocketAddr = remoteSocketAddr;
 
         PublishProcessor<RxP2PObject> txObj = PublishProcessor.create();
+        PublishSubject<RxP2PObject> rxObj = PublishSubject.create();
 
+        RxP2PObjectController rSocketP2PObjectController = new RxP2PObjectController(objectMapper, txObj, rxObj, profileId, pipesMap);
 
 
         return Mono.just(new AbstractRSocket() {
-
-            RxP2PObjectController rSocketP2PObjectController = new RxP2PObjectController(objectMapper, txObj, rxObj);
 
             //2directional - sending in both ways:
             @Override
@@ -126,4 +132,5 @@ public class RxP2PController {
 
         });
     }
+
 }

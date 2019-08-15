@@ -19,6 +19,9 @@ import com.hwx.rx_chat.common.response.DialogResponse;
 import com.hwx.rx_chat.common.response.FriendResponse;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
+import com.hwx.rx_chat_client.background.p2p.db.P2pDatabase;
+import com.hwx.rx_chat_client.background.p2p.db.entity.P2pDialog;
+import com.hwx.rx_chat_client.background.p2p.object.RxP2PObject;
 import com.hwx.rx_chat_client.background.p2p.service.RxP2PService;
 import com.hwx.rx_chat_client.fragment.DialogsFragment;
 import com.hwx.rx_chat_client.fragment.FriendsFragment;
@@ -36,12 +39,17 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
+import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.BiFunction;
 import io.reactivex.processors.PublishProcessor;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
@@ -63,6 +71,7 @@ public class HomeViewModel extends ViewModel {
     private Picasso picasso;
 
     private RxP2PService rxP2PService;
+    private P2pDatabase p2pDatabase;
 
     private static Picasso staticPicasso;
 
@@ -125,14 +134,17 @@ public class HomeViewModel extends ViewModel {
             , ResourceProvider resourceProvider
             , SharedPreferencesProvider sharedPreferencesProvider
             , Picasso picasso
+            , P2pDatabase p2pDatabase
 
     ) {
         this.chatRepository = chatRepository;
-        //Log.w("AVX", "inside homeViewModel 2 contructor: chatRepo is"+(chatRepository == null));
         this.friendRepository = friendRepository;
         this.resourceProvider = resourceProvider;
         this.sharedPreferencesProvider = sharedPreferencesProvider;
+        this.p2pDatabase = p2pDatabase;
         staticPicasso = picasso;
+
+        Log.w("AVX", "HomeViewModel: picasso is "+(picasso == null));
 
         lvProfileProgressVisibility.setValue(View.GONE);
 
@@ -149,9 +161,10 @@ public class HomeViewModel extends ViewModel {
         userId =  pref.getString("user_id", "");
 
         //loading bio from prefs:
-        String imageUrl = pref.getString("profileAvatarUrl", "");
-        if (imageUrl != null && !imageUrl.isEmpty())
-            lvProfileAvatarUrl.setValue(pref.getString("profileAvatarUrl", ""));
+        String imageUrl = Configuration.HTTPS_SERVER_URL + pref.getString("profileAvatarUrl", "");
+
+        if (!imageUrl.isEmpty())
+            lvProfileAvatarUrl.setValue(imageUrl);
 
         lvProfileFirstname.setValue(pref.getString("profileFirstName", ""));
         lvProfileLastname.setValue(pref.getString("profileLastName", ""));
@@ -257,13 +270,15 @@ public class HomeViewModel extends ViewModel {
                 .getRxObj()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(rxP2PObject -> {
-                    if (rxP2PObject.getObjectType().equals(com.hwx.rx_chat_client.background.p2p.object.type.ObjectType.MESSAGE)) {
-                        RxMessage rxMessage = rxP2PObject.getMessage();
-                        Log.w("AVX", "got message from user "+rxMessage.toString());
-                    }
-                })
+                .subscribe(rxP2PObject -> handleRxP2PObject(rxP2PObject))
         );
+    }
+
+    private void handleRxP2PObject(RxP2PObject rxP2PObject) {
+        if (rxP2PObject.getObjectType().equals(com.hwx.rx_chat_client.background.p2p.object.type.ObjectType.MESSAGE)) {
+            RxMessage rxMessage = rxP2PObject.getMessage();
+            Log.w("AVX", "got message from user "+rxMessage.toString());
+        }
     }
 
     public Picasso getPicasso() {
@@ -346,23 +361,41 @@ public class HomeViewModel extends ViewModel {
         isDialogsLoading.setValue(true);
         isDialogsVisible.setValue(View.GONE);
 
+        compositeDisposable.add(
+            Observable.combineLatest(
+                    p2pDatabase
+                            .p2pDialogDao()
+                            .getAll()
+
+                            .map(rxList -> rxList
+                                    .stream()
+                                    .map(P2pDialog::toDialogResponse)
+                                    .collect(Collectors.toList())
+                            ).toObservable()
+                    , chatRepository
+                            .getDialogList(
+                                    Configuration.URL_DIALOGS_LIST + "/" + userId
+                                    , headersMap
+                            )
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                    , (dialogResponses, dialogResponses2) -> {
+                        dialogResponses.addAll(dialogResponses2);
+                        return dialogResponses;
+                    }
+            )
+                    .subscribe(dialogList -> {
+                        liveDialogList.setValue(dialogList);
+                        isDialogsLoading.setValue(false);
+                        isDialogsVisible.setValue(View.VISIBLE);
+
+                    }, throwable -> Log.e("AVX", "Error on api call:", throwable))
+        );
 
 
-        Disposable disposable =
-            chatRepository
-                .getDialogList(
-                    Configuration.URL_DIALOGS_LIST+"/"+userId
-                      , headersMap
-                )
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(dialogList -> {
-                    liveDialogList.setValue(dialogList);
-                    isDialogsLoading.setValue(false);
-                    isDialogsVisible.setValue(View.VISIBLE);
 
-                }, throwable -> Log.e("AVX", "Error on api call:", throwable));
-        compositeDisposable.add(disposable);
+
+
     }
 
     public void onRefreshFriendsList() {

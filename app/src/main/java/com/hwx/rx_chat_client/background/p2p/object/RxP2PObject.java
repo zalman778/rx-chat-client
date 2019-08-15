@@ -17,12 +17,19 @@ public class RxP2PObject implements Serializable {
 
     private RxMessage message;
 
+    private String value;
+
     public RxP2PObject() {
     }
 
     public RxP2PObject(ObjectType objectType, RxMessage message) {
         this.objectType = objectType;
         this.message = message;
+    }
+
+    public RxP2PObject(ObjectType objectType, String value) {
+        this.objectType = objectType;
+        this.value = value;
     }
 
     @Override
@@ -53,5 +60,22 @@ public class RxP2PObject implements Serializable {
 
     public void setMessage(RxMessage message) {
         this.message = message;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    @Override
+    public String toString() {
+        return "RxP2PObject{" +
+                "objectType=" + objectType +
+                ", message=" + message +
+                ", value='" + value + '\'' +
+                '}';
     }
 }

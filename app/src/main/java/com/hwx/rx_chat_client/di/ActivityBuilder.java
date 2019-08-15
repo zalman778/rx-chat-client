@@ -6,6 +6,7 @@ import com.hwx.rx_chat_client.view.SignupActivity;
 import com.hwx.rx_chat_client.view.dialog.ConversationActivity;
 import com.hwx.rx_chat_client.view.dialog.CreateDialogActivity;
 import com.hwx.rx_chat_client.view.dialog.DialogProfileActivity;
+import com.hwx.rx_chat_client.view.dialog.P2pConversationActivity;
 import com.hwx.rx_chat_client.view.friend.AddFriendActivity;
 import com.hwx.rx_chat_client.view.friend.ProfileActivity;
 
@@ -23,6 +24,9 @@ public abstract class ActivityBuilder {
 
     @ContributesAndroidInjector()
     abstract DialogProfileActivity bindDialogProfileActivity();
+
+    @ContributesAndroidInjector()
+    abstract P2pConversationActivity bindP2pConversationActivity();
 
     @ContributesAndroidInjector()
     abstract AddFriendActivity bindAddFriendActivity();

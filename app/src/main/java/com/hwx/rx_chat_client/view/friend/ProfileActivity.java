@@ -20,6 +20,7 @@ import com.hwx.rx_chat_client.background.p2p.service.RxP2PService;
 import com.hwx.rx_chat_client.background.service.RxService;
 import com.hwx.rx_chat_client.databinding.ActivityProfileBinding;
 import com.hwx.rx_chat_client.view.dialog.ConversationActivity;
+import com.hwx.rx_chat_client.view.dialog.P2pConversationActivity;
 import com.hwx.rx_chat_client.viewModel.friend.ProfileViewModel;
 
 import javax.inject.Inject;
@@ -126,6 +127,17 @@ public class ProfileActivity extends AppCompatActivity implements HasActivityInj
                         startActivity(ConversationActivity.getIntent(getApplicationContext(), dialogId));
                     }, err-> Log.e("AVX", "err", err))
         );
+
+        compositeDisposable.add(
+            profileViewModel
+                    .getPsP2pDialogOpenAction()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(remoteProfileId -> {
+                        startActivity(P2pConversationActivity.getIntent(getApplicationContext(), remoteProfileId));
+                    }, err-> Log.e("AVX", "err", err))
+        );
+
     }
 
 

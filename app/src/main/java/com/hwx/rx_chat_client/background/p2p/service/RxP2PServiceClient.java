@@ -5,7 +5,9 @@ import android.util.Log;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwx.rx_chat_client.Configuration;
+import com.hwx.rx_chat_client.background.p2p.object.PipeHolder;
 import com.hwx.rx_chat_client.background.p2p.object.RxP2PObject;
+import com.hwx.rx_chat_client.background.p2p.object.type.ObjectType;
 import com.hwx.rx_chat_client.rsocket.ReconnectingRSocket;
 
 import java.io.IOException;
@@ -35,19 +37,21 @@ public class RxP2PServiceClient {
 
     private Map<String, ReconnectingRSocket> rsocketMap = new HashMap<>();
 
-    private Map<String, PublishProcessor<RxP2PObject>> txMap = new HashMap<>();
-    private Map<String, PublishSubject<RxP2PObject>> rxMap = new HashMap<>();
+    private Map<String, PipeHolder> pipesMap;
 
     public PublishProcessor<RxP2PObject> getTxProcessor(String profileId) {
-        return txMap.get(profileId);
+        return pipesMap.get(profileId).getTxPipe();
+    }
+
+    public PublishSubject<RxP2PObject> getRxPublisher(String profileId) {
+        return pipesMap.get(profileId).getRxPipe();
     }
 
 
-    public RxP2PServiceClient(SslContext sslContext, ObjectMapper objectMapper) {
+    public RxP2PServiceClient(SslContext sslContext, ObjectMapper objectMapper, Map<String, PipeHolder> pipesMap) {
         this.sslContext = sslContext;
         this.objectMapper = objectMapper;
-
-        Log.w("AVX", "objectMapper is null = "+(objectMapper == null));
+        this.pipesMap = pipesMap;
     }
 
 
@@ -74,15 +78,16 @@ public class RxP2PServiceClient {
         );
 
         rsocketMap.put(profileId, reconnectingRSocket);
-        txMap.put(profileId, PublishProcessor.create());
-        rxMap.put(profileId, PublishSubject.create());
+
+        PipeHolder pipeHolder = new PipeHolder(PublishProcessor.create(), PublishSubject.create());
+        pipesMap.put(profileId, pipeHolder);
     }
 
     public void requestChannel(String profileId) {
 
         rsocketMap.get(profileId)
                .requestChannel(
-                        txMap.get(profileId)
+                        pipesMap.get(profileId).getTxPipe()
                                 .map(rxObject ->
                                         {
                                             try {
@@ -100,10 +105,13 @@ public class RxP2PServiceClient {
                                 .subscribe(payload -> {
                                     Log.w("AVX", "got data " + payload.getDataUtf8());
                                     try {
-                                        rxMap.get(profileId).onNext(objectMapper.readValue(payload.getDataUtf8(), RxP2PObject.class));
+                                        RxP2PObject recievedObject = objectMapper.readValue(payload.getDataUtf8(), RxP2PObject.class);
+                                        pipesMap.get(profileId).getRxPipe().onNext(recievedObject);
                                     } catch (IOException e1) {
                                         Log.e("AVX", "err p2p on mapper 3 " + e1.getLocalizedMessage() + "; " + e1.getMessage(), e1);
                                     }
                                 }, e -> Log.e("AVX", "err5 p2p", e));
+
+
     }
 }

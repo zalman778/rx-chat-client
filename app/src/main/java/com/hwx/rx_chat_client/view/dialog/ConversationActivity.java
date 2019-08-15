@@ -49,10 +49,7 @@ public class ConversationActivity extends AppCompatActivity implements HasActivi
     @Inject
     DispatchingAndroidInjector<Activity> activityDispatchingAndroidInjector;
 
-    //private static final String EXTRA_MESSAGES_LIST = "EXTRA_MESSAGES_LIST";
     private static final String EXTRA_DIALOG_ID = "EXTRA_DIALOG_ID";
-    private static final String EXTRA_IS_P2P_MODE = "EXTRA_IS_P2P_MODE";
-
 
     private ConversationViewModel conversationViewModel;
     private ActivityConversationBinding activityConversationBinding;
@@ -67,8 +64,6 @@ public class ConversationActivity extends AppCompatActivity implements HasActivi
 
     private RxService rxService;
     private boolean isRxServiceBounded;
-
-    private boolean isP2Pmode = false;
 
 
     @Override
@@ -117,10 +112,6 @@ public class ConversationActivity extends AppCompatActivity implements HasActivi
 
         initRecyclerViewAdapter();
         subscribePublishers();
-
-
-
-
     }
 
     
@@ -330,7 +321,6 @@ public class ConversationActivity extends AppCompatActivity implements HasActivi
 
         //recieving extra data
         String idDialog = getIntent().getStringExtra(EXTRA_DIALOG_ID);
-        isP2Pmode = getIntent().getBooleanExtra(EXTRA_IS_P2P_MODE, false);
 
         conversationViewModel.setIdDialog(idDialog);
 

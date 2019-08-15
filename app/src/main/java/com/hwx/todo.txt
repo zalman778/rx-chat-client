@@ -22,11 +22,8 @@ x) случай изменения имени, чтобы по пройдясь 
 
 
 
-************************
-utils module:
-com.squareup.picasso.Picasso@3933084
-
-vm:
-com.squareup.picasso.Picasso@3933084
+**************************
+current work:
+1) room foreign constraint failed when saving message: no dialog in dialog table:
 
 

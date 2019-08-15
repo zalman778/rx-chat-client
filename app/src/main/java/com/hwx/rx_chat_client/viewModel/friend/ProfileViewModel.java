@@ -21,6 +21,7 @@ import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.repository.DialogRepository;
 import com.hwx.rx_chat_client.repository.FriendRepository;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
+import com.hwx.rx_chat_client.view.dialog.ConversationActivity;
 import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
@@ -48,6 +49,7 @@ public class ProfileViewModel extends ViewModel {
     private Map<String, String> headersMap = new HashMap<>();
 
     private PublishSubject<String> psDialogOpenAction = PublishSubject.create();
+    private PublishSubject<String> psP2pDialogOpenAction = PublishSubject.create();
 
 
     //form objects
@@ -98,6 +100,11 @@ public class ProfileViewModel extends ViewModel {
 
     public void setRxP2PService(RxP2PService rxP2PService) {
         this.rxP2PService = rxP2PService;
+
+    }
+
+    public PublishSubject<String> getPsP2pDialogOpenAction() {
+        return psP2pDialogOpenAction;
     }
 
     private void subscribeRxService() {
@@ -117,8 +124,31 @@ public class ProfileViewModel extends ViewModel {
         );
     }
 
-    private void actionOpenP2PConversation(String profileSocketInfo, String profileId) {
-        rxP2PService.requestChannelByProfileInfo(profileSocketInfo, profileId);
+    private void actionOpenP2PConversation(String profileSocketInfo, String remoteProfileId) {
+
+        if (!rxP2PService.requestChannelByProfileInfo(profileSocketInfo, remoteProfileId))
+            subscribeRxP2pResponse(remoteProfileId);
+        else
+            psP2pDialogOpenAction.onNext(remoteProfileId);
+    }
+
+    //подписываемся на получение в нужном канале PROFILE_ID_RESPONSE:
+    private void subscribeRxP2pResponse(String remoteProfileId) {
+        compositeDisposable.add(
+            rxP2PService
+                .getPipeHolder(remoteProfileId)
+                .getRxPipe()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(rxObj -> {
+                    Log.w("AVX", "got resp for p2p chat...");
+                    if (rxObj.getObjectType().equals(com.hwx.rx_chat_client.background.p2p.object.type.ObjectType.PROFILE_ID_RESPONSE)) {
+
+                        psP2pDialogOpenAction.onNext(remoteProfileId);
+                    }
+                }
+                , err-> Log.e("AVX", "err", err))
+        );
     }
 
     public void setProfileId(String profileId) {

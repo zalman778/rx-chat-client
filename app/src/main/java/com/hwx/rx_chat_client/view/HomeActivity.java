@@ -109,6 +109,8 @@ public class HomeActivity extends AppCompatActivity implements HasSupportFragmen
     }
 
     private void onServiceBoundedAction() {
+
+        rxP2PService.setProfileId(userId);
         homeViewModel.setRxP2PService(rxP2PService);
         sendRxUserIdForBackground();
     }

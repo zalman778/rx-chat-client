@@ -37,6 +37,7 @@
         <activity android:name=".view.friend.AddFriendActivity" />
         <activity android:name=".view.SignupActivity" />
         <activity android:name=".view.dialog.ConversationActivity" />
+        <activity android:name=".view.dialog.P2pConversationActivity" />
         <activity android:name=".view.LoginActivity" />
         <activity android:name=".view.HomeActivity">
             <intent-filter>

@@ -1,5 +1,6 @@
 package com.hwx.rx_chat_client.di;
 
+import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.util.Log;
 
@@ -12,6 +13,8 @@ import com.google.gson.GsonBuilder;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.RxChatApplication;
+import com.hwx.rx_chat_client.background.p2p.db.P2pDatabase;
+import com.hwx.rx_chat_client.background.p2p.db.service.P2pDbService;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.repository.DialogRepository;
 import com.hwx.rx_chat_client.repository.FriendRepository;
@@ -298,22 +301,17 @@ public class UtilsModule {
         return new DialogRepository(dialogService);
     }
 
-//    @Provides
-//    @Singleton
-//    ViewModelFactory getViewModelFactory(
-//              ChatRepository repository
-//            , FriendRepository friendRepository
-//            , DialogRepository dialogRepository
-//            , ResourceProvider resourceProvider
-//            , SharedPreferencesProvider sharedPreferencesProvider
-//            , Picasso picasso
-//            , SslContext sslContext
-//            , ObjectMapper objectMapper
-//    ) {
-//        return new ViewModelFactory(
-//                  repository, friendRepository, dialogRepository, resourceProvider
-//                , sharedPreferencesProvider, picasso, sslContext, objectMapper
-//        );
-//    }
+    @Provides
+    @Singleton
+    P2pDatabase provideP2pDatabase() {
+        return Room.databaseBuilder(context, P2pDatabase.class, "p2pdatabase").build();
+    }
+
+    @Provides
+    @Singleton
+    P2pDbService provideP2pService(P2pDatabase p2pDatabase) {
+        return new P2pDbService(p2pDatabase.p2pDialogDao(), p2pDatabase.p2pMessageDao());
+    }
+
 
 }

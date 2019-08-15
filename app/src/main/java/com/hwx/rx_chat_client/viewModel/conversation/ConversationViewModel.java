@@ -35,12 +35,6 @@ import io.reactivex.subjects.PublishSubject;
 
 public class ConversationViewModel extends ViewModel {
 
-    @Override
-    protected void onCleared() {
-        super.onCleared();
-        disposables.dispose();
-    }
-
     private ChatRepository chatRepository;
     private DialogRepository dialogRepository;
     private ResourceProvider resourceProvider;
@@ -291,6 +285,12 @@ public class ConversationViewModel extends ViewModel {
         lvSendPanelText.setValue(rxMsg.getValue());
         editableMessage = rxMsg;
         this.isEditingMessage = true;
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        disposables.dispose();
     }
 
 
