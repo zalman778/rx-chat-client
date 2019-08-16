@@ -99,31 +99,24 @@ public class HomeActivity extends AppCompatActivity implements HasSupportFragmen
         //binding service
         userId = preferences.getString("user_id", "");
 
-
-
-
-        //delayed with 1000ms, due to need some time to bind service
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.postDelayed(this::onServiceBoundedAction, 2000);
-
     }
-
     private void onServiceBoundedAction() {
+        sendRxUserIdForBackground();
+    }
+    private void onP2pServiceBoundedAction() {
 
         rxP2PService.setProfileId(userId);
         homeViewModel.setRxP2PService(rxP2PService);
-        sendRxUserIdForBackground();
     }
 
     private void sendRxUserIdForBackground() {
         Handler handler = new Handler(Looper.getMainLooper());
         handler.postDelayed(() -> {
-
-            RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.ID_USER_FOR_BACKGROUND, userId, null);
-            rxService.sendRxObject(rxObject);
-
-            //sendRxUserIdForBackground();
-        }, 2000);
+            if (userId != null && !userId.isEmpty()) {
+                RxObject rxObject = new RxObject(ObjectType.SETTING, SettingType.ID_USER_FOR_BACKGROUND, userId, null);
+                rxService.sendRxObject(rxObject);
+            }
+        }, 1000);
     }
 
     private ServiceConnection rxServiceConnection = new ServiceConnection() {
@@ -133,6 +126,7 @@ public class HomeActivity extends AppCompatActivity implements HasSupportFragmen
         ) {
             rxService = ((RxService.RxServiceBinder) service).getService();
             isRxServiceBounded = true;
+            onServiceBoundedAction();
         }
 
         public void onServiceDisconnected(ComponentName arg0) {
@@ -147,6 +141,7 @@ public class HomeActivity extends AppCompatActivity implements HasSupportFragmen
         ) {
             rxP2PService = ((RxP2PService.RxP2PServiceBinder) service).getService();
             isRxP2PServiceBounded = true;
+            onP2pServiceBoundedAction();
         }
 
         public void onServiceDisconnected(ComponentName arg0) {
@@ -255,7 +250,12 @@ public class HomeActivity extends AppCompatActivity implements HasSupportFragmen
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(rxServiceConnection);
+        if (isRxServiceBounded)
+            unbindService(rxServiceConnection);
+
+        if (isRxP2PServiceBounded)
+            unbindService(rxP2PServiceConnection);
+
         compositeDisposable.dispose();
     }
 

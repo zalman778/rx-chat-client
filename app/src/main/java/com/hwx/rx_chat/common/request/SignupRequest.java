@@ -74,15 +74,25 @@ public class SignupRequest implements Serializable {
     public String getInvalidInfo() {
         if (email == null || !Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE).matcher(email).matches())
             return "check email";
-        if (username == null || !Pattern.compile("[A-Za-z0-9_]+").matcher(username).matches() || username.length() < 6 || username.length() > 64)
+        if (username == null || !Pattern.compile("[A-Za-z0-9_]+").matcher(username).matches() || username.length() <= 6 || username.length() > 64)
             return "username should be \"A-Za-z0-9_\", 7-64 symbols";
 
-        if (password == null || !Pattern.compile("[A-Za-z0-9_]+").matcher(password).matches() || password.length() < 6 || password.length() > 64)
+        if (password == null || !Pattern.compile("[A-Za-z0-9_]+").matcher(password).matches() || password.length() <= 6 || password.length() > 64)
             return "password should be \"A-Za-z0-9_\", 7-64 symbols";
 
         if (!password.equals(passwordConfirm)) {
             return "passwords do not match";
         }
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "SignupRequest{" +
+                "username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", passwordConfirm='" + passwordConfirm + '\'' +
+                '}';
     }
 }
