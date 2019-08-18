@@ -19,6 +19,10 @@ public class RxP2PObject implements Serializable {
 
     private String value;
 
+    @SerializedName("value_id")
+    @JsonProperty("value_id")
+    private String valueId;
+
     public RxP2PObject() {
     }
 
@@ -70,12 +74,21 @@ public class RxP2PObject implements Serializable {
         this.value = value;
     }
 
+    public String getValueId() {
+        return valueId;
+    }
+
+    public void setValueId(String valueId) {
+        this.valueId = valueId;
+    }
+
     @Override
     public String toString() {
         return "RxP2PObject{" +
                 "objectType=" + objectType +
                 ", message=" + message +
                 ", value='" + value + '\'' +
+                ", valueId='" + valueId + '\'' +
                 '}';
     }
 }

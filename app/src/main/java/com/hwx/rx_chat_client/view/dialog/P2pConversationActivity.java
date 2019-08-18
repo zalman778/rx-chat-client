@@ -10,13 +10,14 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 
+import com.hwx.rx_chat.common.entity.rx.RxMessage;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.adapter.ConversationElementAdapter;
@@ -24,6 +25,7 @@ import com.hwx.rx_chat_client.adapter.misc.ItemTouchHelperCallback;
 import com.hwx.rx_chat_client.background.p2p.object.type.ObjectType;
 import com.hwx.rx_chat_client.background.p2p.service.RxP2PService;
 import com.hwx.rx_chat_client.databinding.ActivityP2pConversationBinding;
+import com.hwx.rx_chat_client.view.friend.ProfileActivity;
 import com.hwx.rx_chat_client.viewModel.conversation.P2pConversationViewModel;
 
 import javax.inject.Inject;
@@ -71,12 +73,54 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
         ) {
             rxP2PService = ((RxP2PService.RxP2PServiceBinder) service).getService();
             isRxP2PServiceBounded = true;
+            onP2pServiceConnected();
         }
 
         public void onServiceDisconnected(ComponentName arg0) {
             isRxP2PServiceBounded = false;
         }
     };
+
+    private void onP2pServiceConnected() {
+        p2pConversationViewModel.setRxP2PService(rxP2PService);
+        subscribeP2pServicePublishers();
+    }
+
+    private void subscribeP2pServicePublishers() {
+        //удаление сообщения - ответ на запрос удаления от собеседника
+        compositeDisposable.add(
+                rxP2PService
+                        .getPsRemoveMessageAction()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(messageId->{
+                            conversationElementAdapter.performConfirmedMessageDeletion(messageId);
+                        }, e-> Log.e("AVX", "error on req", e))
+        );
+
+        //редактирование сообщений
+        compositeDisposable.add(
+            rxP2PService
+                .getPsEditMessageAction()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(rxMessage->{
+
+                    String messageId = rxMessage.getId();
+                    Integer messagePosition = conversationElementAdapter.getMessagePositionByMessageId(messageId);
+                    if (messagePosition != null) {
+                        RxMessage origMessage = conversationElementAdapter.getMessagesList().get(messagePosition);
+                        origMessage.setValue(rxMessage.getValue());
+                        origMessage.setEdited(true);
+
+                        conversationElementAdapter.notifyItemChanged(messagePosition);
+                    }
+                }, e-> Log.e("AVX", "error on req", e))
+        );
+
+
+
+    }
 
 
     @Override
@@ -87,14 +131,6 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
         bindService(rxServiceIntent, rxP2PServiceConnection, 0);
 
         initDataBinding();
-
-
-        //delayed with 1000ms, due to need some time to bind service
-        Handler handler = new Handler();
-        handler.postDelayed(() -> {
-            p2pConversationViewModel.setRxP2PService(rxP2PService);
-
-        }, 1000);
 
         SharedPreferences preferences = getApplicationContext().getSharedPreferences("localPref", 0);
         currentUserName = preferences.getString("username", "");
@@ -108,8 +144,8 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
     protected void onStop() {
         super.onStop();
 
-        if (isRxP2PServiceBounded)
-            unbindService(rxP2PServiceConnection);
+//        if (isRxP2PServiceBounded)
+//            unbindService(rxP2PServiceConnection);
 
         compositeDisposable.clear();
     }
@@ -136,6 +172,8 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
                 , p2pConversationViewModel.getPsProfileSelectedAction()
         );
 
+        conversationElementAdapter.setDeletingAnyMessage(true);
+
         linearLayoutManager = new LinearLayoutManager(this);
         activityP2pConversationBinding.listMessages.setLayoutManager(linearLayoutManager);
         activityP2pConversationBinding.listMessages.setAdapter(conversationElementAdapter);
@@ -146,6 +184,8 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
     }
 
     private void subscribePublishers() {
+
+        //событие получения сообщения от другого пользователя
         compositeDisposable.add(
             p2pConversationViewModel
                 .getPsRxMessageRecievedAction()
@@ -157,12 +197,87 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
                         rxObject.getMessage().setImageUrl(Configuration.HTTPS_SERVER_URL+rxObject.getMessage().getImageUrl());
 
                         conversationElementAdapter.getMessagesList().add(rxObject.getMessage());
-
-                        conversationElementAdapter.notifyItemInserted(conversationElementAdapter.getMessagesList().size()-1);
+                        conversationElementAdapter.notifyItemInserted(conversationElementAdapter.getMessagesList().size()-1); //-1 del
                         linearLayoutManager.scrollToPosition(conversationElementAdapter.getMessagesList().size()-1);
+                        Log.w("AVX", "p2pConvAct: "+ "added one message:");
                     }
                 }, err-> Log.e("AVX", "error on sub:", err))
         );
+
+        //событие получения списка сообщений из локальной базы
+        compositeDisposable.add(
+                p2pConversationViewModel
+                        .getPsRxMessagesListLoadedFromLocalDbAction()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(rxMsgList->{
+                            conversationElementAdapter.getMessagesList().addAll(rxMsgList);
+                            conversationElementAdapter.notifyDataSetChanged();
+
+                            Log.w("AVX", "p2pConvAct: added to adapter from "
+                                    +(conversationElementAdapter.getMessagesList().size() - rxMsgList.size())
+                                    +  " with size = " + rxMsgList.size() );
+                            linearLayoutManager.scrollToPosition(conversationElementAdapter.getMessagesList().size()-1);
+                        }, err-> Log.e("AVX", "error on sub:", err))
+        );
+
+        //событие нажатия на фото пользователя в чате
+        compositeDisposable.add(
+                p2pConversationViewModel
+                        .getPsProfileSelectedAction()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(profileId->{
+                            startActivity(ProfileActivity.fillDetail(getApplicationContext(), profileId));
+                        }, e-> Log.e("AVX", "error on req", e))
+        );
+
+        //подписываемся на отмену удаления сообщений
+        compositeDisposable.add(
+                p2pConversationViewModel
+                        .getPsPerformRollbackMessageSwipe()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                msgId->conversationElementAdapter.performRollbackMessageViewSwipe(msgId),
+                                err->Log.e("AVX", "err", err))
+        );
+
+        //отслеживаем запросы на удаление сообщений
+        compositeDisposable.add(
+                conversationElementAdapter
+                        .getPsMessageDeleteRequest()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(msgId->
+                                        new AlertDialog.Builder(this)
+                                                .setTitle("Message deleting")
+                                                .setMessage("Do you really want to delete this message? \'"+conversationElementAdapter.getMessageById(msgId).getValue()+"\"")
+                                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                                .setPositiveButton(android.R.string.yes,
+                                                        (dialog, whichButton) -> {
+                                                            p2pConversationViewModel.sendRxEventMessageDelete(msgId);
+//                                                            conversationElementAdapter.performConfirmedMessageDeletion(msgId);
+                                                        })
+                                                .setNegativeButton(android.R.string.no,
+                                                        (dialog, whichButton) ->
+                                                                conversationElementAdapter.performRollbackMessageViewSwipe(msgId)
+                                                )
+                                                .show()
+                                , e-> Log.e("AVX", "error on req", e))
+        );
+
+        //отслеживаем запросы на редактирование сообщений
+        compositeDisposable.add(
+                conversationElementAdapter
+                        .getPsMessageEditRequest()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(rxMsg -> {
+                            p2pConversationViewModel.openMessageEditBox(rxMsg);
+                        }, e-> Log.e("AVX", "error on req", e))
+        );
+
     }
 
     public static Intent getIntent(Context context, String remoteProfileId) {

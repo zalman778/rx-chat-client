@@ -284,7 +284,7 @@ public class ConversationViewModel extends ViewModel {
         lvEditMessageOriginalText.setValue("Оригинальный текст: "+rxMsg.getValue());
         lvSendPanelText.setValue(rxMsg.getValue());
         editableMessage = rxMsg;
-        this.isEditingMessage = true;
+        isEditingMessage = true;
     }
 
     @Override

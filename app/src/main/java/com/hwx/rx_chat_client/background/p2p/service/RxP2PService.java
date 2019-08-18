@@ -1,7 +1,6 @@
 package com.hwx.rx_chat_client.background.p2p.service;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -9,6 +8,8 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hwx.rx_chat.common.entity.rx.RxMessage;
+import com.hwx.rx_chat_client.background.p2p.StringUtils;
 import com.hwx.rx_chat_client.background.p2p.db.P2pDatabase;
 import com.hwx.rx_chat_client.background.p2p.db.entity.P2pMessage;
 import com.hwx.rx_chat_client.background.p2p.db.service.P2pDbService;
@@ -24,7 +25,10 @@ import javax.inject.Inject;
 
 import dagger.android.DaggerService;
 import io.netty.handler.ssl.SslContext;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 
 public class RxP2PService extends DaggerService {
@@ -37,10 +41,14 @@ public class RxP2PService extends DaggerService {
     private RxP2PServiceClient rxP2PServiceClient;
     private RxP2PController rxP2PController;
 
-    private HashMap<String, Disposable> disposablesMap = new HashMap<>();
+    private HashMap<String, CompositeDisposable> disposablesMap = new HashMap<>();
 
     private Map<String, PipeHolder> pipesMap = new HashMap<>();
     private PublishSubject<RxP2PObject> rxObj = PublishSubject.create();
+
+    //actions for vievModels:
+    private PublishSubject<String> psRemoveMessageAction = PublishSubject.create();
+    private PublishSubject<RxMessage> psEditMessageAction = PublishSubject.create();
 
     @Inject
     ObjectMapper objectMapper;
@@ -103,11 +111,23 @@ public class RxP2PService extends DaggerService {
 
 
 
-    public void sendRxP2PObject(String profileId, RxP2PObject rxP2PObject) {
-        getPipeHolder(profileId).getTxPipe().onNext(rxP2PObject);
+    public RxP2PObject sendRxP2PObject(String remoteProfileId, RxP2PObject rxP2PObject) {
+        getPipeHolder(remoteProfileId).getTxPipe().onNext(rxP2PObject);
+
+
+
         if (rxP2PObject.getObjectType().equals(ObjectType.MESSAGE)) {
+
+            String messageIdDialog = rxP2PObject.getMessage().getIdDialog();
+            if (messageIdDialog == null || messageIdDialog.isEmpty()) {
+                messageIdDialog = StringUtils.stringXOR(remoteProfileId, profileId);
+                rxP2PObject.getMessage().setIdDialog(messageIdDialog);
+
+            }
+
             p2PDbService.asyncInsertMessage(new P2pMessage(rxP2PObject.getMessage()));
         }
+        return rxP2PObject;
     }
 
     public PublishSubject<RxP2PObject> getRxObj() {
@@ -122,6 +142,14 @@ public class RxP2PService extends DaggerService {
         return pipesMap.get(profileId);
     }
 
+    public PublishSubject<String> getPsRemoveMessageAction() {
+        return psRemoveMessageAction;
+    }
+
+    public PublishSubject<RxMessage> getPsEditMessageAction() {
+        return psEditMessageAction;
+    }
+
     // *****************************
     // end public API
     // *****************************
@@ -133,9 +161,68 @@ public class RxP2PService extends DaggerService {
 
             Log.i(LOG_TAG, "send profielRequest :"+rxP2PObject.toString());
 
-
+            subscribeP2pRemoteCommands(remoteProfileId);
         }, 2000);
 
+    }
+
+    private void subscribeP2pRemoteCommands(String remoteProfileId) {
+        new Handler(Looper.getMainLooper()).postDelayed(()-> {
+                if (!disposablesMap.containsKey(remoteProfileId))
+                    disposablesMap.put(remoteProfileId, new CompositeDisposable());
+
+                disposablesMap.get(remoteProfileId).add(
+                        getPipeHolder(remoteProfileId)
+                            .getRxPipe()
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .filter(rxP2PObject ->
+                                        rxP2PObject.getObjectType() == ObjectType.ACTION_REMOVE_MESSAGE_REQUEST
+                                    ||  rxP2PObject.getObjectType() == ObjectType.ACTION_REMOVE_MESSAGE_REPONSE
+                                    ||  rxP2PObject.getObjectType() == ObjectType.ACTION_EDIT_MESSAGE_REQUEST
+                                    ||  rxP2PObject.getObjectType() == ObjectType.ACTION_EDIT_MESSAGE_RESPONSE
+                            )
+                            .subscribe(rxP2PObject -> {
+                                Log.w("AVX", "got rxP2Pobj " + rxP2PObject.hashCode());
+                                Log.w("AVX", rxP2PObject.toString());
+                                //обрабатываем события:
+                                if (rxP2PObject.getObjectType() == ObjectType.ACTION_REMOVE_MESSAGE_REQUEST) {
+                                    String messageId = rxP2PObject.getValue();
+
+                                    p2PDbService.asyncDeleteMessage(messageId);
+
+                                    RxP2PObject objToSend = new RxP2PObject(
+                                            ObjectType.ACTION_REMOVE_MESSAGE_REPONSE, messageId
+                                    );
+
+                                    getPipeHolder(remoteProfileId).getTxPipe().onNext(objToSend);
+                                    psRemoveMessageAction.onNext(messageId);
+
+                                } else if (rxP2PObject.getObjectType() == ObjectType.ACTION_REMOVE_MESSAGE_REPONSE) {
+                                    p2PDbService.asyncDeleteMessage(rxP2PObject.getValue());
+                                    psRemoveMessageAction.onNext(rxP2PObject.getValue());
+
+                                } else if (rxP2PObject.getObjectType() == ObjectType.ACTION_EDIT_MESSAGE_REQUEST) {
+                                    p2PDbService.asyncUpdateMessage(new P2pMessage(rxP2PObject.getMessage()));
+
+                                    RxP2PObject objToSend = new RxP2PObject(
+                                            ObjectType.ACTION_EDIT_MESSAGE_RESPONSE, rxP2PObject.getMessage()
+                                    );
+
+                                    getPipeHolder(remoteProfileId).getTxPipe().onNext(objToSend);
+                                    psEditMessageAction.onNext(rxP2PObject.getMessage());
+
+                                } else if (rxP2PObject.getObjectType() == ObjectType.ACTION_EDIT_MESSAGE_RESPONSE) {
+                                    p2PDbService.asyncUpdateMessage(new P2pMessage(rxP2PObject.getMessage()));
+                                    psEditMessageAction.onNext(rxP2PObject.getMessage());
+
+                                } else {
+//                                    getPipeHolder(remoteProfileId).getRxPipe().onNext(rxP2PObject);
+                                }
+                            }, err-> Log.e("AVX", "err", err))
+
+                );
+            }, 2000);
     }
 
 

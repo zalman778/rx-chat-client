@@ -153,17 +153,53 @@ public class P2pMessage {
         this.imageUrl = imageUrl;
     }
 
+    @Override
+    public String toString() {
+        return "P2pMessage{" +
+                "id='" + id + '\'' +
+                ", userFromName='" + userFromName + '\'' +
+                ", userFromId='" + userFromId + '\'' +
+                ", value='" + value + '\'' +
+                ", dateSent=" + dateSent +
+                ", dateExp=" + dateExp +
+                ", isExpirable=" + isExpirable +
+                ", idDialog='" + idDialog + '\'' +
+                ", dateEdited=" + dateEdited +
+                ", isDeleted=" + isDeleted +
+                ", dateDeleted=" + dateDeleted +
+                ", imageUrl='" + imageUrl + '\'' +
+                '}';
+    }
+
     public P2pMessage(RxMessage rxMessage) {
-        this.dateDeleted = rxMessage.getDateDeleted();
-        this.dateEdited = rxMessage.getDateEdited();
-        this.dateExp = rxMessage.getDateExp();
-        this.dateSent = rxMessage.getDateSent();
-        this.idDialog = rxMessage.getIdDialog();
-        this.imageUrl = rxMessage.getImageUrl();
-        this.isDeleted = rxMessage.getDeleted();
-        this.isExpirable = rxMessage.getExpirable();
-        this.userFromId = rxMessage.getUserFromId();
-        this.userFromName = rxMessage.getUserFromName();
-        this.value = rxMessage.getValue();
+        dateDeleted = rxMessage.getDateDeleted();
+        dateEdited = rxMessage.getDateEdited();
+        dateExp = rxMessage.getDateExp();
+        dateSent = rxMessage.getDateSent();
+        idDialog = rxMessage.getIdDialog();
+        imageUrl = rxMessage.getImageUrl();
+        isDeleted = rxMessage.getDeleted();
+        isExpirable = rxMessage.getExpirable();
+        userFromId = rxMessage.getUserFromId();
+        userFromName = rxMessage.getUserFromName();
+        value = rxMessage.getValue();
+        id = rxMessage.getId();
+    }
+
+    public RxMessage toRxMessage() {
+        RxMessage rxMessage = new RxMessage();
+        rxMessage.setDateDeleted(dateDeleted);
+        rxMessage.setDateEdited(dateEdited);
+        rxMessage.setDateExp(dateExp);
+        rxMessage.setDateSent(dateSent);
+        rxMessage.setIdDialog(idDialog);
+        rxMessage.setImageUrl(imageUrl);
+        rxMessage.setDeleted(isDeleted);
+        rxMessage.setExpirable(isExpirable);
+        rxMessage.setUserFromId(userFromId);
+        rxMessage.setUserFromName(userFromName);
+        rxMessage.setValue(value);
+        rxMessage.setId(id);
+        return rxMessage;
     }
 }

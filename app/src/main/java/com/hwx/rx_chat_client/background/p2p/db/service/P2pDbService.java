@@ -2,6 +2,7 @@ package com.hwx.rx_chat_client.background.p2p.db.service;
 
 import android.database.sqlite.SQLiteConstraintException;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.hwx.rx_chat_client.background.p2p.db.dao.P2pDialogDao;
 import com.hwx.rx_chat_client.background.p2p.db.dao.P2pMessageDao;
@@ -22,12 +23,25 @@ public class P2pDbService {
 
     public void asyncInsertMessage(P2pMessage p2pMessage) {
         AsyncTask.execute(()-> {
+            Log.w("AVX", "trying to save mag = "+p2pMessage.toString());
             try {
                 p2pMessageDao.insert(p2pMessage);
             } catch (SQLiteConstraintException ex) {
                 createDialogByDialogId(p2pMessage.getIdDialog(), p2pMessage.getUserFromName());
                 p2pMessageDao.insert(p2pMessage);
             }
+        });
+    }
+
+    public void asyncDeleteMessage(String messageId) {
+        AsyncTask.execute(()->{
+            p2pMessageDao.deleteById(messageId);
+        });
+    }
+
+    public void asyncUpdateMessage(P2pMessage p2pMessage) {
+        AsyncTask.execute(()->{
+           p2pMessageDao.update(p2pMessage);
         });
     }
 

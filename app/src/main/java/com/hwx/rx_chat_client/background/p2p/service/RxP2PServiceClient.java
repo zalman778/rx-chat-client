@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.background.p2p.object.PipeHolder;
 import com.hwx.rx_chat_client.background.p2p.object.RxP2PObject;
-import com.hwx.rx_chat_client.background.p2p.object.type.ObjectType;
 import com.hwx.rx_chat_client.rsocket.ReconnectingRSocket;
 
 import java.io.IOException;

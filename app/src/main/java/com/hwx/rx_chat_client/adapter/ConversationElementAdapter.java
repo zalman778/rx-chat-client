@@ -47,6 +47,9 @@ public class ConversationElementAdapter
 
     private RecyclerView recyclerView;
 
+    //settings of adapter:
+    private boolean isDeletingAnyMessage = false;
+
     public ConversationElementAdapter(
               String currentUserName
             , ResourceProvider resourceProvider
@@ -59,6 +62,10 @@ public class ConversationElementAdapter
         this.recyclerView = recyclerView;
         this.picasso = picasso;
         this.psUserImageClicked = psUserImageClicked;
+    }
+
+    public void setDeletingAnyMessage(boolean deletingAnyMessage) {
+        isDeletingAnyMessage = deletingAnyMessage;
     }
 
     public PublishSubject<RxMessage> getPsMessageEditRequest() {
@@ -181,9 +188,16 @@ public class ConversationElementAdapter
 
     @Override
     public int getSwipeFlags(int adapterPosition) {
+
+        int flags = 0;
+
         if (currentUsername.equals(getMessagesList().get(adapterPosition).getUserFromName()))
-            return ItemTouchHelper.START | ItemTouchHelper.END;
-        return 0;
+            flags = flags | ItemTouchHelper.START | ItemTouchHelper.END;
+
+        if (isDeletingAnyMessage)
+            flags = flags | ItemTouchHelper.START;
+
+        return flags;
     }
 
     public static class ConversationElementViewHolder extends RecyclerView.ViewHolder {
