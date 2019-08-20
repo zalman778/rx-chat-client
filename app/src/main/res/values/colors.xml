@@ -22,4 +22,6 @@
     <color name="light_gray">#e7e7e7</color>
     <color name="white">#ffffff</color>
     <color name="light_white">#ccffffff</color>
+
+    <color name="light_green">#cc55ff55</color>
 </resources>

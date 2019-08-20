@@ -1,0 +1,68 @@
+<?xml version = "1.0" encoding = "utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.hwx.rx_chat_client.fragment.DialogsFragment">
+
+    <data>
+        <import type="android.view.View" />
+
+        <variable
+            name="p2pConversationViewModel"
+            type="com.hwx.rx_chat_client.viewModel.conversation.P2pConversationViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width = "match_parent"
+        android:layout_height = "wrap_content"
+        android:gravity = "center_vertical"
+        android:padding = "10dp"
+        android:weightSum = "1">
+        <LinearLayout
+            android:layout_width = "0dp"
+            android:layout_height = "match_parent"
+            android:layout_weight = "0.6">
+
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/userImage"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="5dp"
+                tools:imageUrl="@{p2pConversationViewModel.lvRemoteProfileAvatarUrl}"/>
+
+            <TextView
+                android:id = "@+id/name"
+                android:layout_width = "match_parent"
+                android:layout_height = "wrap_content"
+                android:layout_marginLeft = "10dp"
+                android:text = "@{p2pConversationViewModel.lvRemoteProfileCaption}"
+                tools:text="Petrov Ivan"
+                android:textSize = "20sp" />
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width = "0dp"
+            android:layout_height = "match_parent"
+            android:layout_marginRight = "10dp"
+            android:layout_weight = "0.4"
+            android:gravity = "end">
+
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                android:layout_width="fill_parent"
+                android:layout_height="match_parent"
+                app:visibility="@{p2pConversationViewModel.lvVisibilityConnectingProgress}"
+                android:indeterminate="true"
+                android:indeterminateDrawable="@drawable/rotate_white_progress_bar"
+                />
+
+        </LinearLayout>
+    </LinearLayout>
+
+
+</layout>

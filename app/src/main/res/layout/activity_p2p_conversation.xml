@@ -3,6 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
+
+
     <data>
 
         <variable
@@ -11,11 +13,15 @@
 
     </data>
 
+
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         tools:context="com.hwx.rx_chat_client.view.dialog.P2pConversationActivity">
+
+        <include layout="@layout/toolbar_p2p_conversation_old" />
 
         <ImageButton
             android:id="@+id/btnSend"
@@ -24,6 +30,7 @@
             android:layout_alignParentBottom="true"
             android:layout_alignParentEnd="true"
             android:onClick="@{(v) -> p2pConversationViewModel.onBtnSend(v)}"
+            android:enabled="@{p2pConversationViewModel.lvEnabledBtnSend}"
             android:background="#00000000"
             android:padding="10dp"
             android:scaleType="centerInside"
@@ -106,6 +113,7 @@
             android:textColorHint="#aeafaf"
             android:textSize="15sp"
             android:text="@={p2pConversationViewModel.lvSendPanelText}"
+            android:enabled="@{p2pConversationViewModel.lvEnabledBtnSend}"
             />
 
         <TextView

@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwx.rx_chat_client.background.p2p.object.type.ObjectType;
+import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 
 import org.reactivestreams.Publisher;
 
@@ -33,19 +34,19 @@ public class RxP2PController {
 
     private ObjectMapper objectMapper;
 //    private PublishSubject<RxP2PObject> rxObj;
-    private String profileId;
+    private SharedPreferencesProvider sharedPreferencesProvider;
 
     private Map<String, PipeHolder> pipesMap;
 
     public RxP2PController(
-              ObjectMapper objectMapper
+            ObjectMapper objectMapper
             , PublishSubject<RxP2PObject> rxObj
             , String profileId
             , Map<String, PipeHolder> pipesMap
-    ) {
+            , SharedPreferencesProvider sharedPreferencesProvider) {
 //        this.rxObj = rxObj;
         this.objectMapper = objectMapper;
-        this.profileId = profileId;
+        this.sharedPreferencesProvider = sharedPreferencesProvider;
         this.pipesMap = pipesMap;
     }
 
@@ -116,7 +117,7 @@ public class RxP2PController {
         PublishProcessor<RxP2PObject> txObj = PublishProcessor.create();
         PublishSubject<RxP2PObject> rxObj = PublishSubject.create();
 
-        RxP2PObjectController rSocketP2PObjectController = new RxP2PObjectController(objectMapper, txObj, rxObj, profileId, pipesMap);
+        RxP2PObjectController rSocketP2PObjectController = new RxP2PObjectController(objectMapper, txObj, rxObj, sharedPreferencesProvider, pipesMap);
 
 
         return Mono.just(new AbstractRSocket() {

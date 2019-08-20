@@ -3,21 +3,14 @@ package com.hwx.rx_chat_client.view.friend;
 import android.app.Activity;
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.hwx.rx_chat_client.R;
-import com.hwx.rx_chat_client.background.p2p.service.RxP2PService;
-import com.hwx.rx_chat_client.background.service.RxService;
 import com.hwx.rx_chat_client.databinding.ActivityProfileBinding;
 import com.hwx.rx_chat_client.view.dialog.ConversationActivity;
 import com.hwx.rx_chat_client.view.dialog.P2pConversationActivity;
@@ -59,50 +52,10 @@ public class ProfileActivity extends AppCompatActivity implements HasActivityInj
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-    private RxService rxService;
-    private boolean isRxServiceBounded;
-
-    private RxP2PService rxP2PService;
-    private boolean isRxP2PServiceBounded;
-
-
-    private ServiceConnection rxServiceConnection = new ServiceConnection() {
-        public void onServiceConnected(
-                  ComponentName className
-                , IBinder service
-        ) {
-            rxService = ((RxService.RxServiceBinder) service).getService();
-            isRxServiceBounded = true;
-        }
-
-        public void onServiceDisconnected(ComponentName arg0) {
-            isRxServiceBounded = false;
-        }
-    };
-
-    private ServiceConnection rxP2PServiceConnection = new ServiceConnection() {
-        public void onServiceConnected(
-                  ComponentName className
-                , IBinder service
-        ) {
-            rxP2PService = ((RxP2PService.RxP2PServiceBinder) service).getService();
-            isRxP2PServiceBounded = true;
-        }
-
-        public void onServiceDisconnected(ComponentName arg0) {
-            isRxP2PServiceBounded = false;
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        Intent rxServiceIntent = new Intent(this, RxService.class);
-        bindService(rxServiceIntent, rxServiceConnection, 0);
-
-        Intent rxP2PServiceIntent = new Intent(this, RxP2PService.class);
-        bindService(rxP2PServiceIntent, rxP2PServiceConnection, 0);
 
         initDataBinding();
 
@@ -111,11 +64,6 @@ public class ProfileActivity extends AppCompatActivity implements HasActivityInj
 
         subscribePublishers();
 
-        //setting up rxService in VM:
-        new Handler(Looper.getMainLooper()).postDelayed(()-> {
-            profileViewModel.setRxService(rxService);
-            profileViewModel.setRxP2PService(rxP2PService);
-        }, 500);
     }
 
     private void subscribePublishers() {
@@ -159,8 +107,6 @@ public class ProfileActivity extends AppCompatActivity implements HasActivityInj
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (isRxServiceBounded)
-            unbindService(rxServiceConnection);
 
         compositeDisposable.dispose();
     }

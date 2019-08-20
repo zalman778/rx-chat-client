@@ -4,24 +4,16 @@ import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 import android.content.SharedPreferences;
 import android.databinding.BindingAdapter;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
-import com.hwx.rx_chat.common.object.rx.RxObject;
-import com.hwx.rx_chat.common.object.rx.types.EventType;
-import com.hwx.rx_chat.common.object.rx.types.ObjectType;
 import com.hwx.rx_chat.common.response.UserDetailsResponse;
 import com.hwx.rx_chat_client.Configuration;
-import com.hwx.rx_chat_client.background.p2p.service.RxP2PService;
-import com.hwx.rx_chat_client.background.service.RxService;
 import com.hwx.rx_chat_client.repository.ChatRepository;
 import com.hwx.rx_chat_client.repository.DialogRepository;
 import com.hwx.rx_chat_client.repository.FriendRepository;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
-import com.hwx.rx_chat_client.view.dialog.ConversationActivity;
 import com.squareup.picasso.Picasso;
 
 import java.util.HashMap;
@@ -65,8 +57,6 @@ public class ProfileViewModel extends ViewModel {
     private MutableLiveData<Integer> lvVisibilityOpenP2PChat = new MutableLiveData<>();
 
     private MutableLiveData<String> lvProfileRequestResult = new MutableLiveData<>();
-    private RxService rxService;
-    private RxP2PService rxP2PService;
 
     @Inject
     public ProfileViewModel(
@@ -93,62 +83,8 @@ public class ProfileViewModel extends ViewModel {
 
     }
 
-    public void setRxService(RxService rxService) {
-        this.rxService = rxService;
-        subscribeRxService();
-    }
-
-    public void setRxP2PService(RxP2PService rxP2PService) {
-        this.rxP2PService = rxP2PService;
-
-    }
-
     public PublishSubject<String> getPsP2pDialogOpenAction() {
         return psP2pDialogOpenAction;
-    }
-
-    private void subscribeRxService() {
-        compositeDisposable.add(
-                rxService.getPpRxProcessor()
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(
-                                rxObject -> {
-                                    if (rxObject.getEventType().equals(EventType.FRIEND_SOCKET_INFO)
-                                            && rxObject.getObjectType().equals(ObjectType.EVENT)) {
-                                        actionOpenP2PConversation((String) rxObject.getValue(), (String) rxObject.getObjectId());
-                                    }
-                                    Log.w("AVX", "got rxObj="+rxObject.toString());
-                                }
-                                , err-> Log.e("AVX", "err", err))
-        );
-    }
-
-    private void actionOpenP2PConversation(String profileSocketInfo, String remoteProfileId) {
-
-        if (!rxP2PService.requestChannelByProfileInfo(profileSocketInfo, remoteProfileId))
-            subscribeRxP2pResponse(remoteProfileId);
-        else
-            psP2pDialogOpenAction.onNext(remoteProfileId);
-    }
-
-    //подписываемся на получение в нужном канале PROFILE_ID_RESPONSE:
-    private void subscribeRxP2pResponse(String remoteProfileId) {
-        compositeDisposable.add(
-            rxP2PService
-                .getPipeHolder(remoteProfileId)
-                .getRxPipe()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(rxObj -> {
-                    Log.w("AVX", "got resp for p2p chat...");
-                    if (rxObj.getObjectType().equals(com.hwx.rx_chat_client.background.p2p.object.type.ObjectType.PROFILE_ID_RESPONSE)) {
-
-                        psP2pDialogOpenAction.onNext(remoteProfileId);
-                    }
-                }
-                , err-> Log.e("AVX", "err", err))
-        );
     }
 
     public void setProfileId(String profileId) {
@@ -251,12 +187,7 @@ public class ProfileViewModel extends ViewModel {
     }
 
     public void onClickOpenP2PChat() {
-
-
-        new Handler(Looper.getMainLooper()).postDelayed(()-> {
-            RxObject rxRequest = new RxObject(ObjectType.REQUEST_IP, profileId);
-            rxService.sendRxObject(rxRequest);
-        }, 500);
+        psP2pDialogOpenAction.onNext(profileId);
     }
 
     public void onClickOpenChat() {

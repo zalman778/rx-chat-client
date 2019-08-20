@@ -21,13 +21,18 @@ public class P2pDbService {
         this.p2pMessageDao = p2pMessageDao;
     }
 
-    public void asyncInsertMessage(P2pMessage p2pMessage) {
+    public void asyncInsertMessage(P2pMessage p2pMessage, String profileId, String remoteProfileId) {
         AsyncTask.execute(()-> {
             Log.w("AVX", "trying to save mag = "+p2pMessage.toString());
             try {
                 p2pMessageDao.insert(p2pMessage);
             } catch (SQLiteConstraintException ex) {
-                createDialogByDialogId(p2pMessage.getIdDialog(), p2pMessage.getUserFromName());
+                createDialog(
+                          p2pMessage.getIdDialog()
+                        , p2pMessage.getUserFromName()
+                        , remoteProfileId
+                        , profileId
+                );
                 p2pMessageDao.insert(p2pMessage);
             }
         });
@@ -45,11 +50,13 @@ public class P2pDbService {
         });
     }
 
-    private void createDialogByDialogId(String idDialog, String userFromName) {
+    private void createDialog(String idDialog, String userFromName, String userFromId, String profileId) {
         P2pDialog p2pDialog = new P2pDialog();
         p2pDialog.setCaption(userFromName);
         p2pDialog.setDateCreated(new Date());
+        p2pDialog.setRemoteProfileId(userFromId);
         p2pDialog.setId(idDialog);
+        p2pDialog.setProfileId(profileId);
         p2pDialogDao.insert(p2pDialog);
     }
 

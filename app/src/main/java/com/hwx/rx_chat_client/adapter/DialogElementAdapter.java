@@ -4,6 +4,7 @@ import android.arch.lifecycle.LifecycleOwner;
 import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
@@ -12,6 +13,7 @@ import com.hwx.rx_chat.common.response.DialogResponse;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.databinding.ActivityDialogElementBinding;
 import com.hwx.rx_chat_client.repository.ChatRepository;
+import com.hwx.rx_chat_client.util.ResourceProvider;
 import com.hwx.rx_chat_client.util.SingleLiveEvent;
 import com.hwx.rx_chat_client.viewModel.conversation.DialogElementViewModel;
 import com.squareup.picasso.Picasso;
@@ -30,6 +32,8 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
     private Map<String, String> headersMap;
     private ChatRepository chatRepository;
     private Picasso picasso;
+    private ResourceProvider resourceProvider;
+
 
     //key - dialogId
     private Map<String, DialogElementViewModel> viewModelsMap = new HashMap<>();
@@ -40,12 +44,16 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
             , Map<String, String> headersMap
             , ChatRepository chatRepository
             , Picasso picasso
+            , ResourceProvider resourceProvider
+
     ) {
         this.lifecycleOwner = lifecycleOwner;
         this.lvDialogPicked = lvDialogPicked;
         this.headersMap = headersMap;
         this.chatRepository = chatRepository;
+        this.resourceProvider = resourceProvider;
         this.picasso = picasso;
+
     }
 
     //смотрим есть ли такой диалог, если есть, то в нем обновляем инфу, если нет, то создаем новый
@@ -67,7 +75,8 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
             dialogResponse.setLastMessage(rxMessage.getValue());
             dialogResponse.setLastDate(rxMessage.getDateSent());
             dialogList.add(0, dialogResponse);
-            notifyItemInserted(this.dialogList.size());
+           // notifyItemInserted(this.dialogList.size());
+            notifyItemInserted(0); //^?
         }
     }
 
@@ -101,7 +110,7 @@ public class DialogElementAdapter extends RecyclerView.Adapter<DialogElementAdap
 
         if (viewModelsMap.get(dialogId) == null) {
             DialogElementViewModel dialogElementViewModel = new DialogElementViewModel(
-                    dialogList.get(i), headersMap, chatRepository, lvDialogPicked, picasso
+                    dialogList.get(i), headersMap, chatRepository, lvDialogPicked, picasso, resourceProvider
             );
             viewModelsMap.put(dialogId, dialogElementViewModel);
         }

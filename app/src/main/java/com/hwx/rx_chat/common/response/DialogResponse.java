@@ -33,6 +33,16 @@ public class DialogResponse implements Serializable {
     @JsonProperty("chat_image")
     private String chatImage;
 
+    //todo these are for client only, rewrite!
+
+    @SerializedName("is_private")
+    @JsonProperty("is_private")
+    private boolean isPrivate;
+
+    @SerializedName("remote_profile_id")
+    @JsonProperty("remote_profile_id")
+    private String remoteProfileId;
+
     public String getDialogId() {
         return dialogId;
     }
@@ -83,22 +93,40 @@ public class DialogResponse implements Serializable {
         this.chatImage = chatImage;
     }
 
+    public boolean isPrivate() {
+        return isPrivate;
+    }
+
+    public void setPrivate(boolean aPrivate) {
+        isPrivate = aPrivate;
+    }
+
+    public String getRemoteProfileId() {
+        return remoteProfileId;
+    }
+
+    public void setRemoteProfileId(String remoteProfileId) {
+        this.remoteProfileId = remoteProfileId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DialogResponse that = (DialogResponse) o;
-        return Objects.equals(dialogId, that.dialogId) &&
+        return isPrivate == that.isPrivate &&
+                Objects.equals(dialogId, that.dialogId) &&
                 Objects.equals(dialogName, that.dialogName) &&
                 Objects.equals(lastDate, that.lastDate) &&
                 Objects.equals(lastUser, that.lastUser) &&
                 Objects.equals(lastMessage, that.lastMessage) &&
-                Objects.equals(chatImage, that.chatImage);
+                Objects.equals(chatImage, that.chatImage) &&
+                Objects.equals(remoteProfileId, that.remoteProfileId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dialogId, dialogName, lastDate, lastUser, lastMessage, chatImage);
+        return Objects.hash(dialogId, dialogName, lastDate, lastUser, lastMessage, chatImage, isPrivate, remoteProfileId);
     }
 
     @Override
@@ -110,6 +138,8 @@ public class DialogResponse implements Serializable {
                 ", lastUser='" + lastUser + '\'' +
                 ", lastMessage='" + lastMessage + '\'' +
                 ", chatImage='" + chatImage + '\'' +
+                ", isPrivate=" + isPrivate +
+                ", remoteProfileId='" + remoteProfileId + '\'' +
                 '}';
     }
 }

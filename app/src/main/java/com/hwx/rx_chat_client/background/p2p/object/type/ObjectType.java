@@ -4,6 +4,8 @@ public enum ObjectType {
      MESSAGE
     /*
         Req/res for request channel operation
+        value - caption
+        valueId - avatarUrl
      */
     ,PROFILE_ID_REQUEST
     ,PROFILE_ID_RESPONSE
@@ -12,7 +14,7 @@ public enum ObjectType {
         msgId in value
      */
     ,ACTION_REMOVE_MESSAGE_REQUEST
-    ,ACTION_REMOVE_MESSAGE_REPONSE
+    ,ACTION_REMOVE_MESSAGE_RESPONSE
 
     //message edit
     ,ACTION_EDIT_MESSAGE_REQUEST

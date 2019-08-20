@@ -203,6 +203,10 @@ public class HomeViewModel extends ViewModel {
         return chatRepository;
     }
 
+    public ResourceProvider getResourceProvider() {
+        return resourceProvider;
+    }
+
     public MutableLiveData<String> getLvProfileAvatarUrl() {
         return lvProfileAvatarUrl;
     }
@@ -365,13 +369,16 @@ public class HomeViewModel extends ViewModel {
             Observable.combineLatest(
                     p2pDatabase
                             .p2pDialogDao()
-                            .getAll()
-
+                            .getAllSortedByLastMessageDate(userId)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
                             .map(rxList -> rxList
                                     .stream()
                                     .map(P2pDialog::toDialogResponse)
                                     .collect(Collectors.toList())
-                            ).toObservable()
+                            )
+                            .toObservable()
+
                     , chatRepository
                             .getDialogList(
                                     Configuration.URL_DIALOGS_LIST + "/" + userId

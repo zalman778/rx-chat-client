@@ -6,7 +6,7 @@ public class Configuration {
 
 
     //Rsocket config:
-    public static final int RSOCKET_PORT = 7879;
+    public static final int RSOCKET_PORT = 7878;
     public static final int RSOCKET_TICK_PERIOD = 42;
     public static final int RSOCKET_ACK_PERIOD = 60;
     public static final int RSOCKET_MISSED_ACKS = 10;

@@ -11,19 +11,20 @@ import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 
-import com.hwx.rx_chat.common.entity.rx.RxMessage;
 import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.adapter.ConversationElementAdapter;
 import com.hwx.rx_chat_client.adapter.misc.ItemTouchHelperCallback;
 import com.hwx.rx_chat_client.background.p2p.object.type.ObjectType;
 import com.hwx.rx_chat_client.background.p2p.service.RxP2PService;
+import com.hwx.rx_chat_client.background.service.RxService;
 import com.hwx.rx_chat_client.databinding.ActivityP2pConversationBinding;
 import com.hwx.rx_chat_client.view.friend.ProfileActivity;
 import com.hwx.rx_chat_client.viewModel.conversation.P2pConversationViewModel;
@@ -50,6 +51,9 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
     private RxP2PService rxP2PService;
     private boolean isRxP2PServiceBounded;
 
+    private RxService rxService;
+    private boolean isRxServiceBounded;
+
     private P2pConversationViewModel p2pConversationViewModel;
     private ActivityP2pConversationBinding activityP2pConversationBinding;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
@@ -59,6 +63,8 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
     private String currentUserName;
     private String currentUserId;
     private ItemTouchHelper mItemTouchHelper;
+
+    private String remoteProfileId;
 
 
     @Override
@@ -81,8 +87,29 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
         }
     };
 
+    private ServiceConnection rxServiceConnection = new ServiceConnection() {
+        public void onServiceConnected(
+                  ComponentName className
+                , IBinder service
+        ) {
+            rxService = ((RxService.RxServiceBinder) service).getService();
+            isRxServiceBounded = true;
+            onRxServiceConnected();
+        }
+
+        public void onServiceDisconnected(ComponentName arg0) {
+            isRxServiceBounded = false;
+        }
+    };
+
+    private void onRxServiceConnected() {
+        p2pConversationViewModel.setRxService(rxService);
+    }
+
     private void onP2pServiceConnected() {
+        p2pConversationViewModel.setRemoteProfileId(remoteProfileId);
         p2pConversationViewModel.setRxP2PService(rxP2PService);
+
         subscribeP2pServicePublishers();
     }
 
@@ -94,6 +121,7 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(messageId->{
+                            Log.w("AVX", "caught message remove action with id = "+messageId);
                             conversationElementAdapter.performConfirmedMessageDeletion(messageId);
                         }, e-> Log.e("AVX", "error on req", e))
         );
@@ -107,13 +135,16 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
                 .subscribe(rxMessage->{
 
                     String messageId = rxMessage.getId();
+
+                    Log.w("AVX", "caught message edition with id = "+messageId +"; and new text = "+rxMessage.getValue());
+
+
                     Integer messagePosition = conversationElementAdapter.getMessagePositionByMessageId(messageId);
                     if (messagePosition != null) {
-                        RxMessage origMessage = conversationElementAdapter.getMessagesList().get(messagePosition);
-                        origMessage.setValue(rxMessage.getValue());
-                        origMessage.setEdited(true);
-
+                        conversationElementAdapter.getMessagesList().set(messagePosition, rxMessage);
                         conversationElementAdapter.notifyItemChanged(messagePosition);
+
+                        conversationElementAdapter.performRollbackMessageViewSwipe(messageId); //todo: costyl?
                     }
                 }, e-> Log.e("AVX", "error on req", e))
         );
@@ -127,8 +158,22 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //recieving extra data
+        remoteProfileId = getIntent().getStringExtra(EXTRA_REMOTE_PROFILE_ID);
+
+
+
+
+        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+        getSupportActionBar().setDisplayShowCustomEnabled(true);
+        getSupportActionBar().setCustomView(R.layout.toolbar_p2p_conversation);
+
+
         Intent rxServiceIntent = new Intent(this, RxP2PService.class);
         bindService(rxServiceIntent, rxP2PServiceConnection, 0);
+
+        Intent rxP2pServiceIntent = new Intent(this, RxService.class);
+        bindService(rxP2pServiceIntent, rxServiceConnection, 0);
 
         initDataBinding();
 
@@ -138,6 +183,7 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
 
         initRecyclerViewAdapter();
         subscribePublishers();
+
     }
 
     @Override
@@ -152,12 +198,6 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
 
     private void initDataBinding() {
         p2pConversationViewModel = ViewModelProviders.of(this, mFactory).get(P2pConversationViewModel.class);
-
-        //recieving extra data
-        String remoteProfileId = getIntent().getStringExtra(EXTRA_REMOTE_PROFILE_ID);
-
-        p2pConversationViewModel.setRemoteProfileId(remoteProfileId);
-
         activityP2pConversationBinding = DataBindingUtil.setContentView(this, R.layout.activity_p2p_conversation);
         activityP2pConversationBinding.setLifecycleOwner(this);
         activityP2pConversationBinding.setP2pConversationViewModel(p2pConversationViewModel);
@@ -165,7 +205,7 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
 
     private void initRecyclerViewAdapter() {
         conversationElementAdapter = new ConversationElementAdapter(
-                currentUserName
+                  currentUserName
                 , p2pConversationViewModel.getResourceProvider()
                 , activityP2pConversationBinding.listMessages
                 , p2pConversationViewModel.getPicasso()
@@ -192,9 +232,11 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(rxObject -> {
+                    Log.w("AVX", "p2pConvAct: got rxObj = "+rxObject);
                     if (rxObject.getObjectType().equals(ObjectType.MESSAGE)) {
                         //подставляем свой url
-                        rxObject.getMessage().setImageUrl(Configuration.HTTPS_SERVER_URL+rxObject.getMessage().getImageUrl());
+//                        String imageUrl = Configuration.HTTPS_SERVER_URL+Configuration.IMAGE_PREFIX+rxObject.getMessage().getImageUrl();
+//                        rxObject.getMessage().setImageUrl(imageUrl);
 
                         conversationElementAdapter.getMessagesList().add(rxObject.getMessage());
                         conversationElementAdapter.notifyItemInserted(conversationElementAdapter.getMessagesList().size()-1); //-1 del

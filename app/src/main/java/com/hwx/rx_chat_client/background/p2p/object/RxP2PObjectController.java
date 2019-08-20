@@ -7,6 +7,7 @@ import android.util.Log;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hwx.rx_chat_client.background.p2p.object.type.ObjectType;
+import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 
 import java.io.IOException;
 import java.util.Map;
@@ -23,7 +24,7 @@ public class RxP2PObjectController {
     private String clientId = UUID.randomUUID().toString();
 
     private ObjectMapper objectMapper;
-    private String profileId;
+    private SharedPreferencesProvider sharedPreferencesProvider;
 
     private String remoteProfileId;
     private PublishProcessor<RxP2PObject> txObj;
@@ -31,16 +32,16 @@ public class RxP2PObjectController {
     private Map<String, PipeHolder> pipesMap;
 
     public RxP2PObjectController(
-              ObjectMapper objectMapper
+            ObjectMapper objectMapper
             , PublishProcessor<RxP2PObject> txObj
             , PublishSubject<RxP2PObject> rxObj
-            , String profileId
+            , SharedPreferencesProvider sharedPreferencesProvider
             , Map<String, PipeHolder> pipesMap
     ) {
         this.objectMapper = objectMapper;
         this.rxObj = rxObj;
         this.txObj = txObj;
-        this.profileId = profileId;
+        this.sharedPreferencesProvider = sharedPreferencesProvider;
         this.pipesMap = pipesMap;
         Log.w("AVX", "created new rxP2PController for with clientId = "+clientId);
     }
@@ -84,7 +85,13 @@ public class RxP2PObjectController {
 
             RxP2PObject respObj = new RxP2PObject();
             respObj.setObjectType(ObjectType.PROFILE_ID_RESPONSE);
-            respObj.setValue(profileId);
+            String profileAvatarUrl = sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("profileAvatarUrl", "");
+            profileAvatarUrl = profileAvatarUrl != null ? profileAvatarUrl.replace("api/image/", "") : null;
+
+            String caption = sharedPreferencesProvider.getSharedPreferences("username", 0).getString("profileAvatarUrl", "");
+            respObj.setValue(caption);
+            respObj.setValueId(profileAvatarUrl);
+
 
             new Handler(Looper.getMainLooper()).postDelayed(()-> {
                 txObj.onNext(respObj);

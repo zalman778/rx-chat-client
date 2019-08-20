@@ -20,7 +20,9 @@ import com.hwx.rx_chat_client.adapter.DialogElementAdapter;
 import com.hwx.rx_chat_client.databinding.FragmentMessagesBinding;
 import com.hwx.rx_chat_client.view.dialog.ConversationActivity;
 import com.hwx.rx_chat_client.view.dialog.CreateDialogActivity;
+import com.hwx.rx_chat_client.view.dialog.P2pConversationActivity;
 import com.hwx.rx_chat_client.viewModel.HomeViewModel;
+import com.hwx.rx_chat_client.viewModel.misc.DialogInfoHolder;
 
 import javax.inject.Inject;
 
@@ -28,6 +30,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 
+/*
+    Фрагмент списка диалогов - самое левое окно в homeActivity
+ */
 public class DialogsFragment extends Fragment {
 
     @Inject
@@ -59,8 +64,12 @@ public class DialogsFragment extends Fragment {
 
 
         dialogElementAdapter = new DialogElementAdapter(
-                  homeViewModel.getLvDialogPicked(), getActivity(), homeViewModel.getHeadersMap()
-                , homeViewModel.getChatRepository(), homeViewModel.getPicasso()
+                  homeViewModel.getLvDialogPicked()
+                , getActivity()
+                , homeViewModel.getHeadersMap()
+                , homeViewModel.getChatRepository()
+                , homeViewModel.getPicasso()
+                , homeViewModel.getResourceProvider()
         );
         fragmentMessagesBinding.listMessages.setLayoutManager(new LinearLayoutManager(getActivity()));
         fragmentMessagesBinding.listMessages.setAdapter(dialogElementAdapter);
@@ -108,16 +117,22 @@ public class DialogsFragment extends Fragment {
 
         //for case when fragment destroyed and subscribtions should no longer come to closed fragment..
         //when recieving list of dialogs..
-        homeViewModel.getLiveDialogList().observe(getViewLifecycleOwner(), dialogList -> {
+        homeViewModel.getLiveDialogList().observe(getViewLifecycleOwner()
+                , dialogList -> {
             DialogElementAdapter dialogElementAdapter = (DialogElementAdapter) fragmentMessagesBinding.listMessages.getAdapter();
             dialogElementAdapter.setDialogList(dialogList);
         });
 
         //диалог выбран и его данные уже загружены
         homeViewModel.getLvDialogPicked().observe(
-                getViewLifecycleOwner(), dialogId -> {
-                    //Log.w("AVX", "got list of messages : "+((ArrayList<MessageResponse>) o).size());
-                    startActivity(ConversationActivity.getIntent(getActivity(), (String) dialogId));
+                 getViewLifecycleOwner()
+                , holder -> {
+                     DialogInfoHolder dialogInfoHolder = (DialogInfoHolder) holder;
+                     if (dialogInfoHolder.isPrivate()) {
+                         startActivity(P2pConversationActivity.getIntent(getActivity(), dialogInfoHolder.getRemoteProfileId()));
+                     } else {
+                         startActivity(ConversationActivity.getIntent(getActivity(), dialogInfoHolder.getId()));
+                     }
                 }
         );
 

@@ -17,7 +17,10 @@ import com.hwx.rx_chat_client.background.p2p.object.PipeHolder;
 import com.hwx.rx_chat_client.background.p2p.object.RxP2PController;
 import com.hwx.rx_chat_client.background.p2p.object.RxP2PObject;
 import com.hwx.rx_chat_client.background.p2p.object.type.ObjectType;
+import com.hwx.rx_chat_client.background.p2p.service.misc.RxP2pRemoteProfileInfo;
+import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +30,6 @@ import dagger.android.DaggerService;
 import io.netty.handler.ssl.SslContext;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 
@@ -44,6 +46,7 @@ public class RxP2PService extends DaggerService {
     private HashMap<String, CompositeDisposable> disposablesMap = new HashMap<>();
 
     private Map<String, PipeHolder> pipesMap = new HashMap<>();
+    private Map<String, RxP2pRemoteProfileInfo> remoteProfilesMap = new HashMap<>();
     private PublishSubject<RxP2PObject> rxObj = PublishSubject.create();
 
     //actions for vievModels:
@@ -61,6 +64,9 @@ public class RxP2PService extends DaggerService {
 
     @Inject
     P2pDbService p2PDbService;
+
+    @Inject
+    SharedPreferencesProvider sharedPreferencesProvider;
 
     public class RxP2PServiceBinder extends Binder {
         public RxP2PService getService() {
@@ -86,6 +92,32 @@ public class RxP2PService extends DaggerService {
     // *****************************
     // public API:
     // *****************************
+
+    /*
+        метод проверяет - установлено ли соеднинение - по мапе пайпов, из not disposed
+     */
+    public boolean isEstablished(String remoteProfileId) {
+        boolean check =       getPipeHolder(remoteProfileId) != null
+                && !getPipeHolder(remoteProfileId).getTxPipe().hasComplete()
+                && !getPipeHolder(remoteProfileId).getRxPipe().hasComplete();
+
+        return check;
+    }
+
+    //метод сохраяняет инфо о собеседнике
+    public void saveEstablishedConnectionInfo(
+              String remoteProfileId
+            , String profileCaption
+            , String profileAvatarUrl
+    ) {
+       RxP2pRemoteProfileInfo info = new RxP2pRemoteProfileInfo(profileAvatarUrl, profileCaption);
+       remoteProfilesMap.put(remoteProfileId, info);
+    }
+
+    public RxP2pRemoteProfileInfo getRemoteProfileInfo(String remoteProfileId) {
+        return remoteProfilesMap.get(remoteProfileId);
+    }
+
     /*
         return true if such connection exists
         otherwise it creates such connection and send requesting package, should be subbed outside
@@ -108,9 +140,6 @@ public class RxP2PService extends DaggerService {
 
     }
 
-
-
-
     public RxP2PObject sendRxP2PObject(String remoteProfileId, RxP2PObject rxP2PObject) {
         getPipeHolder(remoteProfileId).getTxPipe().onNext(rxP2PObject);
 
@@ -125,7 +154,7 @@ public class RxP2PService extends DaggerService {
 
             }
 
-            p2PDbService.asyncInsertMessage(new P2pMessage(rxP2PObject.getMessage()));
+            p2PDbService.asyncInsertMessage(new P2pMessage(rxP2PObject.getMessage()), profileId, remoteProfileId);
         }
         return rxP2PObject;
     }
@@ -154,11 +183,19 @@ public class RxP2PService extends DaggerService {
     // end public API
     // *****************************
 
+
+    /*
+        Отправляем запрос на p2p чат собеседнику:
+        вкладываем в запрос: avatarUrl ->rxP2pObj.valueId, caption->value
+     */
     private void sendProfileIdRequest(String remoteProfileId) {
         new Handler(Looper.getMainLooper()).postDelayed(()-> {
             RxP2PObject rxP2PObject = new RxP2PObject(ObjectType.PROFILE_ID_REQUEST, profileId);
-            sendRxP2PObject(remoteProfileId, rxP2PObject);
+            String profileAvatarUrl = sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("profileAvatarUrl", "");
+            profileAvatarUrl = profileAvatarUrl != null ? profileAvatarUrl.replace("api/image/", "") : null;
+            rxP2PObject.setValueId(profileAvatarUrl);
 
+            sendRxP2PObject(remoteProfileId, rxP2PObject);
             Log.i(LOG_TAG, "send profielRequest :"+rxP2PObject.toString());
 
             subscribeP2pRemoteCommands(remoteProfileId);
@@ -178,7 +215,7 @@ public class RxP2PService extends DaggerService {
                             .observeOn(AndroidSchedulers.mainThread())
                             .filter(rxP2PObject ->
                                         rxP2PObject.getObjectType() == ObjectType.ACTION_REMOVE_MESSAGE_REQUEST
-                                    ||  rxP2PObject.getObjectType() == ObjectType.ACTION_REMOVE_MESSAGE_REPONSE
+                                    ||  rxP2PObject.getObjectType() == ObjectType.ACTION_REMOVE_MESSAGE_RESPONSE
                                     ||  rxP2PObject.getObjectType() == ObjectType.ACTION_EDIT_MESSAGE_REQUEST
                                     ||  rxP2PObject.getObjectType() == ObjectType.ACTION_EDIT_MESSAGE_RESPONSE
                             )
@@ -192,18 +229,22 @@ public class RxP2PService extends DaggerService {
                                     p2PDbService.asyncDeleteMessage(messageId);
 
                                     RxP2PObject objToSend = new RxP2PObject(
-                                            ObjectType.ACTION_REMOVE_MESSAGE_REPONSE, messageId
+                                            ObjectType.ACTION_REMOVE_MESSAGE_RESPONSE, messageId
                                     );
 
                                     getPipeHolder(remoteProfileId).getTxPipe().onNext(objToSend);
                                     psRemoveMessageAction.onNext(messageId);
 
-                                } else if (rxP2PObject.getObjectType() == ObjectType.ACTION_REMOVE_MESSAGE_REPONSE) {
+                                } else if (rxP2PObject.getObjectType() == ObjectType.ACTION_REMOVE_MESSAGE_RESPONSE) {
                                     p2PDbService.asyncDeleteMessage(rxP2PObject.getValue());
                                     psRemoveMessageAction.onNext(rxP2PObject.getValue());
 
                                 } else if (rxP2PObject.getObjectType() == ObjectType.ACTION_EDIT_MESSAGE_REQUEST) {
-                                    p2PDbService.asyncUpdateMessage(new P2pMessage(rxP2PObject.getMessage()));
+
+                                    RxMessage rxMessage = rxP2PObject.getMessage();
+                                    rxMessage.setEdited(true);
+                                    rxMessage.setDateEdited(new Date());
+                                    p2PDbService.asyncUpdateMessage(new P2pMessage(rxMessage));
 
                                     RxP2PObject objToSend = new RxP2PObject(
                                             ObjectType.ACTION_EDIT_MESSAGE_RESPONSE, rxP2PObject.getMessage()
@@ -240,7 +281,8 @@ public class RxP2PService extends DaggerService {
 
         Log.i(LOG_TAG, "RxP2PService onCreate");
         rxP2PServiceClient = new RxP2PServiceClient(sslContext, objectMapper, pipesMap);
-        rxP2PController = new RxP2PController(objectMapper, rxObj, profileId, pipesMap);
+
+        rxP2PController = new RxP2PController(objectMapper, rxObj, profileId, pipesMap, sharedPreferencesProvider);
 
     }
 
