@@ -1,11 +1,15 @@
 package com.hwx.rx_chat_client.background.p2p.object;
 
+import javax.crypto.spec.SecretKeySpec;
+
 import io.reactivex.processors.PublishProcessor;
 import io.reactivex.subjects.PublishSubject;
 
 public class PipeHolder {
     private PublishProcessor<RxP2PObject> txPipe;
     private PublishSubject<RxP2PObject> rxPipe;
+
+    private SecretKeySpec secretKey;
 
     public PipeHolder(PublishProcessor<RxP2PObject> txPipe, PublishSubject<RxP2PObject> rxPipe) {
         this.txPipe = txPipe;
@@ -26,5 +30,13 @@ public class PipeHolder {
 
     public void setRxPipe(PublishSubject<RxP2PObject> rxPipe) {
         this.rxPipe = rxPipe;
+    }
+
+    public SecretKeySpec getSecretKey() {
+        return secretKey;
+    }
+
+    public void setSecretKey(SecretKeySpec secretKey) {
+        this.secretKey = secretKey;
     }
 }

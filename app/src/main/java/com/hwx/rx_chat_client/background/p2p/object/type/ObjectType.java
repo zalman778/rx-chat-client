@@ -3,12 +3,12 @@ package com.hwx.rx_chat_client.background.p2p.object.type;
 public enum ObjectType {
      MESSAGE
     /*
-        Req/res for request channel operation
+        Req/res for request channel operation, and starts DH key exchange:
         value - caption
         valueId - avatarUrl
      */
-    ,PROFILE_ID_REQUEST
-    ,PROFILE_ID_RESPONSE
+    , WELCOME_HANDSHAKE_REQEST
+    , WELCOME_HANDSHAKE_RESPONSE
     /*
         Req/res for message deletion:
         msgId in value

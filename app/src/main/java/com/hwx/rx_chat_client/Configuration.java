@@ -11,6 +11,10 @@ public class Configuration {
     public static final int RSOCKET_ACK_PERIOD = 60;
     public static final int RSOCKET_MISSED_ACKS = 10;
 
+    //dh settings:
+    public static final int DH_KEY_SIZE = 256;
+    public static final String AES_INIT_VECTOR = "INIT_VECTOR12345";
+
 
     public static final int RSOCKET_CLIENT_SERVER_PORT = 6000 + (int) Math.round(Math.random() * 1000);
 

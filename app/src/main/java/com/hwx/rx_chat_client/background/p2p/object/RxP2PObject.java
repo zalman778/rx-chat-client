@@ -23,6 +23,10 @@ public class RxP2PObject implements Serializable {
     @JsonProperty("value_id")
     private String valueId;
 
+    @SerializedName("value_additional")
+    @JsonProperty("value_additional")
+    private String valueAdditional;
+
     public RxP2PObject() {
     }
 
@@ -36,19 +40,6 @@ public class RxP2PObject implements Serializable {
         this.value = value;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        RxP2PObject that = (RxP2PObject) o;
-        return objectType == that.objectType &&
-                Objects.equals(message, that.message);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(objectType, message);
-    }
 
     public ObjectType getObjectType() {
         return objectType;
@@ -82,6 +73,31 @@ public class RxP2PObject implements Serializable {
         this.valueId = valueId;
     }
 
+    public String getValueAdditional() {
+        return valueAdditional;
+    }
+
+    public void setValueAdditional(String valueAdditional) {
+        this.valueAdditional = valueAdditional;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RxP2PObject that = (RxP2PObject) o;
+        return objectType == that.objectType &&
+                Objects.equals(message, that.message) &&
+                Objects.equals(value, that.value) &&
+                Objects.equals(valueId, that.valueId) &&
+                Objects.equals(valueAdditional, that.valueAdditional);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(objectType, message, value, valueId, valueAdditional);
+    }
+
     @Override
     public String toString() {
         return "RxP2PObject{" +
@@ -89,6 +105,7 @@ public class RxP2PObject implements Serializable {
                 ", message=" + message +
                 ", value='" + value + '\'' +
                 ", valueId='" + valueId + '\'' +
+                ", valueAdditional='" + valueAdditional + '\'' +
                 '}';
     }
 }

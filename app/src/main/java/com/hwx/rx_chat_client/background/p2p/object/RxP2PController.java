@@ -3,20 +3,16 @@ package com.hwx.rx_chat_client.background.p2p.object;
 import android.util.Log;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hwx.rx_chat_client.background.p2p.object.type.ObjectType;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
 
 import org.reactivestreams.Publisher;
 
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.Map;
 
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.processors.PublishProcessor;
-import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 import io.rsocket.AbstractRSocket;
 import io.rsocket.ConnectionSetupPayload;
@@ -33,7 +29,6 @@ import static com.hwx.rx_chat_client.background.p2p.service.RxP2PService.DEFAULT
 public class RxP2PController {
 
     private ObjectMapper objectMapper;
-//    private PublishSubject<RxP2PObject> rxObj;
     private SharedPreferencesProvider sharedPreferencesProvider;
 
     private Map<String, PipeHolder> pipesMap;
@@ -43,7 +38,8 @@ public class RxP2PController {
             , PublishSubject<RxP2PObject> rxObj
             , String profileId
             , Map<String, PipeHolder> pipesMap
-            , SharedPreferencesProvider sharedPreferencesProvider) {
+            , SharedPreferencesProvider sharedPreferencesProvider
+    ) {
 //        this.rxObj = rxObj;
         this.objectMapper = objectMapper;
         this.sharedPreferencesProvider = sharedPreferencesProvider;
@@ -117,7 +113,8 @@ public class RxP2PController {
         PublishProcessor<RxP2PObject> txObj = PublishProcessor.create();
         PublishSubject<RxP2PObject> rxObj = PublishSubject.create();
 
-        RxP2PObjectController rSocketP2PObjectController = new RxP2PObjectController(objectMapper, txObj, rxObj, sharedPreferencesProvider, pipesMap);
+        RxP2PObjectController rSocketP2PObjectController =
+                new RxP2PObjectController(objectMapper, txObj, rxObj, sharedPreferencesProvider, pipesMap);
 
 
         return Mono.just(new AbstractRSocket() {

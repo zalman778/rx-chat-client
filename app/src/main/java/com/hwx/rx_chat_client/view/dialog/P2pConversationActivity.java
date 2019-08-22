@@ -11,14 +11,12 @@ import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 
-import com.hwx.rx_chat_client.Configuration;
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.adapter.ConversationElementAdapter;
 import com.hwx.rx_chat_client.adapter.misc.ItemTouchHelperCallback;
@@ -74,7 +72,7 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
 
     private ServiceConnection rxP2PServiceConnection = new ServiceConnection() {
         public void onServiceConnected(
-                ComponentName className
+                  ComponentName className
                 , IBinder service
         ) {
             rxP2PService = ((RxP2PService.RxP2PServiceBinder) service).getService();
@@ -164,11 +162,6 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
 
 
 
-        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
-        getSupportActionBar().setDisplayShowCustomEnabled(true);
-        getSupportActionBar().setCustomView(R.layout.toolbar_p2p_conversation);
-
-
         Intent rxServiceIntent = new Intent(this, RxP2PService.class);
         bindService(rxServiceIntent, rxP2PServiceConnection, 0);
 
@@ -225,6 +218,15 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
 
     private void subscribePublishers() {
 
+        //получение названия диалога из vm
+        compositeDisposable.add(
+                p2pConversationViewModel
+                        .getPsDialogCaptionRefreshAction()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(this::setTitle, err-> Log.e("AVX", "error on sub:", err))
+        );
+
         //событие получения сообщения от другого пользователя
         compositeDisposable.add(
             p2pConversationViewModel
@@ -234,6 +236,7 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
                 .subscribe(rxObject -> {
                     Log.w("AVX", "p2pConvAct: got rxObj = "+rxObject);
                     if (rxObject.getObjectType().equals(ObjectType.MESSAGE)) {
+                        Log.w("AVX", "p2pActConv: got sent rxObj");
                         //подставляем свой url
 //                        String imageUrl = Configuration.HTTPS_SERVER_URL+Configuration.IMAGE_PREFIX+rxObject.getMessage().getImageUrl();
 //                        rxObject.getMessage().setImageUrl(imageUrl);

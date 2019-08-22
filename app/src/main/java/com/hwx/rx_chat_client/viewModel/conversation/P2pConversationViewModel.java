@@ -4,6 +4,7 @@ import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 
@@ -29,6 +30,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Inject;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -47,6 +51,7 @@ public class P2pConversationViewModel  extends ViewModel {
     private String userId;
     private String profileAvatarUrl;
     private String remoteProfileId;
+    private String idDialog;
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
@@ -63,17 +68,11 @@ public class P2pConversationViewModel  extends ViewModel {
     private PublishSubject<List<RxMessage>> psRxMessagesListLoadedFromLocalDbAction = PublishSubject.create();
     private PublishSubject<String> psPerformRollbackMessageSwipe = PublishSubject.create();
     private PublishSubject<String> psProfileSelectedAction = PublishSubject.create();
-//    private PublishSubject<String> psDialogInfoAction = PublishSubject.create();
 
     //toolbar:
-    private MutableLiveData<String> lvRemoteProfileAvatarUrl = new MutableLiveData<>();
     private MutableLiveData<String> lvRemoteProfileCaption = new MutableLiveData<>();
     private MutableLiveData<Integer> lvVisibilityConnectingProgress = new MutableLiveData<>();
-
-
-    private String idDialog;
-
-//    private HashSet<String> uniqueMessagesIdSet = new HashSet<>();
+    private PublishSubject<String> psDialogCaptionRefreshAction = PublishSubject.create();
 
     private Boolean isEditingMessage = false;
     private RxMessage editableMessage;
@@ -101,10 +100,10 @@ public class P2pConversationViewModel  extends ViewModel {
         isMessagesLoading.setValue(false);
         lvEditMessageVisibility.setValue(View.GONE);
 
-        lvEnabledBtnSend.setValue(true);
+        lvEnabledBtnSend.setValue(false);
 
         //toolbar:
-        lvRemoteProfileAvatarUrl.setValue("");
+//        lvRemoteProfileAvatarUrl.setValue("");
         lvRemoteProfileCaption.setValue("no data at the moment");
         lvVisibilityConnectingProgress.setValue(View.VISIBLE);
 
@@ -114,8 +113,9 @@ public class P2pConversationViewModel  extends ViewModel {
         profileAvatarUrl = profileAvatarUrl != null ? profileAvatarUrl.replace("api/image/", "") : null;
 
 
-
     }
+
+
 
 
 
@@ -127,7 +127,7 @@ public class P2pConversationViewModel  extends ViewModel {
     public void setRxP2PService(RxP2PService rxP2PService) {
         this.rxP2PService = rxP2PService;
 
-        subscribeDbMessages();
+        subscribeRxP2pPublishers();
         establishConnection();
     }
 
@@ -145,6 +145,8 @@ public class P2pConversationViewModel  extends ViewModel {
     private void establishConnection() {
         if (rxP2PService.isEstablished(remoteProfileId)) {
             subscribeP2pPublishers();
+            unlockDialogUI();
+            updateDialogUI();
 
         } else {
             sendRemoteProfileRequest();
@@ -156,15 +158,17 @@ public class P2pConversationViewModel  extends ViewModel {
     //метод разблокирует кнопку отправки и поле ввода сообщений
     private void unlockDialogUI() {
         lvEnabledBtnSend.setValue(true);
+        lvVisibilityConnectingProgress.setValue(View.GONE);
     }
 
     //метод обновляет инфо о диалоге - ставит картинку и название
     private void updateDialogUI() {
-        lvVisibilityConnectingProgress.setValue(View.GONE);
+
 
         RxP2pRemoteProfileInfo info = rxP2PService.getRemoteProfileInfo(remoteProfileId);
-        lvRemoteProfileAvatarUrl.setValue(Configuration.HTTPS_SERVER_URL+Configuration.IMAGE_PREFIX+info.getAvatarUrl());
-        lvRemoteProfileCaption.setValue(info.getCaption());
+        if (info != null) {
+            psDialogCaptionRefreshAction.onNext(info.getCaption());
+        }
     }
 
     private void sendRemoteProfileRequest() {
@@ -192,31 +196,8 @@ public class P2pConversationViewModel  extends ViewModel {
 
     private void actionRequestChannel(String profileSocketInfo, String remoteProfileId) {
         rxP2PService.requestChannelByProfileInfo(profileSocketInfo, remoteProfileId);
-        subscribeRxP2pProfileIdResponse(remoteProfileId);
-
     }
 
-    //подписываемся на получение в нужном канале PROFILE_ID_RESPONSE:
-    private void subscribeRxP2pProfileIdResponse(String remoteProfileId) {
-        compositeDisposable.add(
-            rxP2PService
-                .getPipeHolder(remoteProfileId)
-                .getRxPipe()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .filter(rxP2PObject -> rxP2PObject.getObjectType().equals(com.hwx.rx_chat_client.background.p2p.object.type.ObjectType.PROFILE_ID_RESPONSE))
-                .subscribe(rxObj -> {
-                    Log.w("AVX", "got resp for p2p chat...:"+rxObj.getValue()+"; "+rxObj.getValueId());
-                    rxP2PService.saveEstablishedConnectionInfo(remoteProfileId, rxObj.getValue(), rxObj.getValueId());
-                    subscribeP2pPublishers();
-
-                    updateDialogUI();
-                    unlockDialogUI();
-
-                }
-                , err-> Log.e("AVX", "err", err))
-        );
-    }
 
     //метод
     private void subscribeP2pPublishers() {
@@ -227,14 +208,28 @@ public class P2pConversationViewModel  extends ViewModel {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(rxP2PObject -> {
-                            if (rxP2PObject.getObjectType() == ObjectType.MESSAGE) {
-                                psRxMessageRecievedAction.onNext(rxP2PObject);
-                                p2PDbService.asyncInsertMessage(
-                                        new P2pMessage(rxP2PObject.getMessage()), userId, remoteProfileId
-                                );
-                            }
+
+                        if (rxP2PObject.getObjectType() == ObjectType.MESSAGE) {
+
+                            //decrypting -->>
+                            SecretKeySpec secretKeySpec = rxP2PService.getPipeHolder(remoteProfileId).getSecretKey();
+
+                            byte[] encodedBytes = Base64.decode(rxP2PObject.getMessage().getValue(), Base64.DEFAULT);
+                            Cipher aliceCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+
+                            IvParameterSpec iv = new IvParameterSpec(Configuration.AES_INIT_VECTOR.getBytes("UTF-8"));
+                            aliceCipher.init(Cipher.DECRYPT_MODE, secretKeySpec, iv);
+                            byte[] recovered = aliceCipher.doFinal(encodedBytes);
+                            rxP2PObject.getMessage().setValue(new String(recovered));
+                            //<<-- decrypted
+
+                            psRxMessageRecievedAction.onNext(rxP2PObject);
+                            p2PDbService.asyncInsertMessage(
+                                    new P2pMessage(rxP2PObject.getMessage()), userId, remoteProfileId
+                            );
                         }
-                         , err-> Log.e("AVX", "err", err)
+                    }
+                     , err-> Log.e("AVX", "err", err)
                 )
         );
     }
@@ -255,7 +250,7 @@ public class P2pConversationViewModel  extends ViewModel {
 
 
     //subscribing on messages in local db for local history
-    private void subscribeDbMessages() {
+    private void subscribeRxP2pPublishers() {
         compositeDisposable.add(
             p2pDatabase
                 .p2pMessageDao()
@@ -269,6 +264,18 @@ public class P2pConversationViewModel  extends ViewModel {
                     psRxMessagesListLoadedFromLocalDbAction.onNext(rxMessageList);
 
                 } , err-> Log.e("AVX", "err", err))
+        );
+
+        compositeDisposable.add(
+                rxP2PService
+                        .getPsWelcomeHandshakeCompletedAction()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(val->{
+                            subscribeP2pPublishers();
+                            updateDialogUI();
+                            unlockDialogUI();
+                        },  err-> Log.e("AVX", "err", err))
         );
     }
 
@@ -300,8 +307,8 @@ public class P2pConversationViewModel  extends ViewModel {
         return lvEditMessageVisibility;
     }
 
-    public MutableLiveData<String> getLvRemoteProfileAvatarUrl() {
-        return lvRemoteProfileAvatarUrl;
+    public PublishSubject<String> getPsDialogCaptionRefreshAction() {
+        return psDialogCaptionRefreshAction;
     }
 
     public MutableLiveData<String> getLvRemoteProfileCaption() {
@@ -319,6 +326,7 @@ public class P2pConversationViewModel  extends ViewModel {
     public PublishSubject<List<RxMessage>> getPsRxMessagesListLoadedFromLocalDbAction() {
         return psRxMessagesListLoadedFromLocalDbAction;
     }
+
 
     public String getIdDialog() {
         return idDialog;
@@ -346,27 +354,37 @@ public class P2pConversationViewModel  extends ViewModel {
 
         } else {
             String msgText = lvSendPanelText.getValue();
-            lvSendPanelText.setValue("");
+            if (msgText != null && !msgText.isEmpty()) {
+                lvSendPanelText.setValue("");
 
 
-            RxMessage rxMessage = new RxMessage(
-                    UUID.randomUUID().toString()
-                    , sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("username", "")
-                    , sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("user_id", "")
-                    , msgText
-                    , new Date()
-                    , idDialog
-            );
-            rxMessage.setImageUrl(profileAvatarUrl);
+                RxMessage rxMessage = new RxMessage(
+                        UUID.randomUUID().toString()
+                        , sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("username", "")
+                        , sharedPreferencesProvider.getSharedPreferences("localPref", 0).getString("user_id", "")
+                        , msgText
+                        , new Date()
+                        , idDialog
+                );
+                rxMessage.setImageUrl(profileAvatarUrl);
 
-            RxP2PObject rxObj = new RxP2PObject(ObjectType.MESSAGE, rxMessage);
+                RxP2PObject rxObj = new RxP2PObject(ObjectType.MESSAGE, rxMessage);
 
-            Log.w("AVX", "sending rx message:"+rxMessage.getValue());
+                Log.w("AVX", "sending rx message:" + rxMessage.getValue());
 
-            rxObj = rxP2PService.sendRxP2PObject(remoteProfileId, rxObj);
+                String messageIdDialog = rxObj.getMessage().getIdDialog();
+                if (messageIdDialog == null || messageIdDialog.isEmpty()) {
+                    messageIdDialog = StringUtils.stringXOR(remoteProfileId, userId);
+                    rxObj.getMessage().setIdDialog(messageIdDialog);
+                }
 
-            //make sent message as recieved for showing it back on screen:
-            psRxMessageRecievedAction.onNext(rxObj);
+                String realMessage = rxObj.getMessage().getValue();
+                rxP2PService.sendRxP2PObject(remoteProfileId, rxObj);
+
+                rxObj.getMessage().setValue(realMessage);
+                psRxMessageRecievedAction.onNext(rxObj);
+
+            }
         }
     }
 

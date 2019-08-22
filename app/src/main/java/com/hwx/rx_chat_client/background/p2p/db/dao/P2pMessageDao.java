@@ -19,7 +19,7 @@ public abstract class P2pMessageDao {
     @Query("SELECT * FROM p2pmessage")
     public abstract Flowable<List<P2pMessage>> getAll();
 
-    @Query("SELECT * FROM p2pmessage WHERE id_dialog = :dialogId order by date_sent DESC")
+    @Query("SELECT * FROM p2pmessage WHERE id_dialog = :dialogId order by date_sent ASC")
     public abstract Single<List<P2pMessage>> getAllByDialogId(String dialogId);
 
     @Query("SELECT * FROM p2pmessage WHERE id = :id")
