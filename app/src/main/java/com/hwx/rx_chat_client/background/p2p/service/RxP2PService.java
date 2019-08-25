@@ -21,6 +21,7 @@ import com.hwx.rx_chat_client.background.p2p.object.RxP2PObject;
 import com.hwx.rx_chat_client.background.p2p.object.type.ObjectType;
 import com.hwx.rx_chat_client.background.p2p.service.misc.RxP2pRemoteProfileInfo;
 import com.hwx.rx_chat_client.util.SharedPreferencesProvider;
+import com.hwx.rx_chat_client.view.dialer.DialAcceptorActivity;
 
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
@@ -48,6 +49,7 @@ import dagger.android.DaggerService;
 import io.netty.handler.ssl.SslContext;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.internal.operators.flowable.FlowableBufferBoundary;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 
@@ -63,6 +65,7 @@ public class RxP2PService extends DaggerService {
     private RxP2PController rxP2PController;
 
     private HashMap<String, CompositeDisposable> disposablesMap = new HashMap<>();
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private Map<String, PipeHolder> pipesMap = new HashMap<>();
     private Map<String, RxP2pRemoteProfileInfo> remoteProfilesMap = new HashMap<>();
@@ -75,6 +78,8 @@ public class RxP2PService extends DaggerService {
     private PublishSubject<String> psRemoveMessageAction = PublishSubject.create();
     private PublishSubject<RxMessage> psEditMessageAction = PublishSubject.create();
     private PublishSubject<String> psWelcomeHandshakeCompletedAction = PublishSubject.create();
+
+    private PublishSubject<String> psVoiceCallResponseAction = PublishSubject.create();
 
     @Inject
     ObjectMapper objectMapper;
@@ -90,6 +95,7 @@ public class RxP2PService extends DaggerService {
 
     @Inject
     SharedPreferencesProvider sharedPreferencesProvider;
+
 
     public class RxP2PServiceBinder extends Binder {
         public RxP2PService getService() {
@@ -193,6 +199,7 @@ public class RxP2PService extends DaggerService {
         getPipeHolder(remoteProfileId).getTxPipe().onNext(rxP2PObject);
     }
 
+
     public PublishSubject<RxP2PObject> getRxObj() {
         return rxObj;
     }
@@ -215,6 +222,10 @@ public class RxP2PService extends DaggerService {
 
     public PublishSubject<String> getPsWelcomeHandshakeCompletedAction() {
         return psWelcomeHandshakeCompletedAction;
+    }
+
+    public PublishSubject<String> getPsVoiceCallResponseAction() {
+        return psVoiceCallResponseAction;
     }
 
     // *****************************
@@ -258,13 +269,15 @@ public class RxP2PService extends DaggerService {
                 rxP2PObject.setValueAdditional(encodedPublicKey);
 
             } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-                e.printStackTrace();
                 Log.e("AVX", "err on DH alg", e);
+            } catch (Exception ex) {
+                Log.e("AVX", "err on DH alg", ex);
+
             }
 
 
             sendRxP2PObject(remoteProfileId, rxP2PObject);
-            Log.i(LOG_TAG, "send profielRequest :"+rxP2PObject.toString());
+            Log.w(LOG_TAG, "send profielRequest :"+rxP2PObject.toString());
 
             subscribeP2pRemoteCommands(remoteProfileId);
         }, 1000);
@@ -289,8 +302,12 @@ public class RxP2PService extends DaggerService {
                                     ||  rxP2PObject.getObjectType() == ObjectType.ACTION_EDIT_MESSAGE_REQUEST
                                     ||  rxP2PObject.getObjectType() == ObjectType.ACTION_EDIT_MESSAGE_RESPONSE
                                     ||  rxP2PObject.getObjectType() == ObjectType.WELCOME_HANDSHAKE_RESPONSE
+                                    ||  rxP2PObject.getObjectType() == ObjectType.ACTION_VOICE_CALL_START_REQUEST
+                                    ||  rxP2PObject.getObjectType() == ObjectType.ACTION_VOICE_CALL_START_RESPONSE
                             )
                             .subscribe(rxP2PObject -> {
+
+//                                Log.w("AVX", "### got rxObj = "+rxP2PObject.toString());
 
                                 //обрабатываем события:
                                 if (rxP2PObject.getObjectType() == ObjectType.ACTION_REMOVE_MESSAGE_REQUEST) {
@@ -367,11 +384,26 @@ public class RxP2PService extends DaggerService {
                                     }
 
                                     psWelcomeHandshakeCompletedAction.onNext(remoteProfileId);
+
+                                } else if (rxP2PObject.getObjectType() == ObjectType.ACTION_VOICE_CALL_START_REQUEST) {
+
+                                    Log.w("AVX", "openning dialer...");
+                                    Intent dialerIntent = new Intent(this, DialAcceptorActivity.class);
+                                    dialerIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                                    String dialerCaption = getRemoteProfileInfo(remoteProfileId).getCaption(); dialogCaption = "Vasya";
+
+                                    String dialerCaption = "Vasya...";
+                                    dialerIntent.putExtra(DialAcceptorActivity.EXTRA_DIALER_CAPTION, dialerCaption);
+                                    dialerIntent.putExtra(DialAcceptorActivity.EXTRA_REMOTE_PROFILE_ID, remoteProfileId);
+                                    startActivity(dialerIntent);
+                                } else if (rxP2PObject.getObjectType() == ObjectType.ACTION_VOICE_CALL_START_RESPONSE) {
+                                    psVoiceCallResponseAction.onNext(remoteProfileId);
+//                                    Log.w("AVX", "recieved call voice start response...");
                                 }
                             }, err-> Log.e("AVX", "err", err))
 
                 );
-            }, 500);
+            }, 1000);
     }
 
 
@@ -393,10 +425,21 @@ public class RxP2PService extends DaggerService {
         rxP2PController = new RxP2PController(
                   objectMapper, rxObj, profileId, pipesMap
                 , sharedPreferencesProvider
+                , psWelcomeHandshakeCompletedAction
         );
 
+        subscribeP2pRxObjectControllerPublishers();
     }
 
+    private void subscribeP2pRxObjectControllerPublishers() {
+        compositeDisposable.add(
+            psWelcomeHandshakeCompletedAction
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::subscribeP2pRemoteCommands
+                        , err-> Log.e("AVX", "err", err))
+        );
+    }
 
 
     @Override
@@ -416,4 +459,5 @@ public class RxP2PService extends DaggerService {
         super.onDestroy();
         Log.i(LOG_TAG, "onDestroy");
     }
+
 }

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="dialCallerViewModel"
+            type="com.hwx.rx_chat_client.viewModel.dialer.DialCallerViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:padding="10dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvVoiceCallCaptionTitle"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:text="Outgoing call with ..."
+            tools:text="Outgoing call with ..."
+            android:textStyle="bold"
+            android:gravity="center"
+            />
+
+        <TextView
+            android:id="@+id/tvVoiceCallCaption"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:text="@={dialCallerViewModel.lvVoiceCallCaptionTitle}"
+            tools:text="TextView"
+            android:gravity="center"
+            />
+
+        <TextView
+            android:id="@+id/tvVoiceCallStatus"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+
+            android:text="@={dialCallerViewModel.lvVoiceCallStatus}"
+            tools:text="00:00"
+            android:textStyle="bold"
+            android:gravity="center"
+            />
+
+        <Button
+            android:id="@+id/btnVoiceCallDrop"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Drop"
+            android:onClick="@{(v) -> dialCallerViewModel.onClickVoiceCallDrop()}"
+            />
+
+    </LinearLayout>
+
+</layout>

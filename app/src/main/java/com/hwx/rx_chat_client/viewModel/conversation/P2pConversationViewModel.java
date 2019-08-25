@@ -69,6 +69,8 @@ public class P2pConversationViewModel  extends ViewModel {
     private PublishSubject<String> psPerformRollbackMessageSwipe = PublishSubject.create();
     private PublishSubject<String> psProfileSelectedAction = PublishSubject.create();
 
+    private PublishSubject<String> psOpenVoiceCallerActivityAction = PublishSubject.create();
+
     //toolbar:
     private MutableLiveData<String> lvRemoteProfileCaption = new MutableLiveData<>();
     private MutableLiveData<Integer> lvVisibilityConnectingProgress = new MutableLiveData<>();
@@ -80,6 +82,7 @@ public class P2pConversationViewModel  extends ViewModel {
 
     private RxP2PService rxP2PService;
     private RxService rxService;
+
 
     @Inject
     public P2pConversationViewModel(
@@ -195,6 +198,7 @@ public class P2pConversationViewModel  extends ViewModel {
     }
 
     private void actionRequestChannel(String profileSocketInfo, String remoteProfileId) {
+        Log.w("AVX", "### before request channel");
         rxP2PService.requestChannelByProfileInfo(profileSocketInfo, remoteProfileId);
     }
 
@@ -207,6 +211,7 @@ public class P2pConversationViewModel  extends ViewModel {
                 .getRxPipe()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
+                .filter(rxP2PObject -> rxP2PObject.getObjectType() == ObjectType.MESSAGE)
                 .subscribe(rxP2PObject -> {
 
                         if (rxP2PObject.getObjectType() == ObjectType.MESSAGE) {
@@ -327,6 +332,9 @@ public class P2pConversationViewModel  extends ViewModel {
         return psRxMessagesListLoadedFromLocalDbAction;
     }
 
+    public PublishSubject<String> getPsOpenVoiceCallerActivityAction() {
+        return psOpenVoiceCallerActivityAction;
+    }
 
     public String getIdDialog() {
         return idDialog;
@@ -411,5 +419,16 @@ public class P2pConversationViewModel  extends ViewModel {
         lvSendPanelText.setValue(rxMsg.getValue());
         editableMessage = rxMsg;
         isEditingMessage = true;
+    }
+
+    //Кнопка вызова - отправляем запрос - и открываем активити звонка
+    public void onClickBtnVoiceCall() {
+        if (rxP2PService.isEstablished(remoteProfileId)) {
+            RxP2PObject rxP2PObject = new RxP2PObject();
+            rxP2PObject.setObjectType(ObjectType.ACTION_VOICE_CALL_START_REQUEST);
+            rxP2PService.sendRxP2PObject(remoteProfileId, rxP2PObject);
+
+            psOpenVoiceCallerActivityAction.onNext(remoteProfileId);
+        }
     }
 }

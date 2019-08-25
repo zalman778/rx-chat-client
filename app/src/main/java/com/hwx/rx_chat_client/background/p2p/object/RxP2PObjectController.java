@@ -41,6 +41,7 @@ public class RxP2PObjectController {
 
     private ObjectMapper objectMapper;
     private SharedPreferencesProvider sharedPreferencesProvider;
+    private PublishSubject<String> psWelcomeHandshakeCompletedAction;
 
     private String remoteProfileId;
     private PublishProcessor<RxP2PObject> txObj;
@@ -53,12 +54,14 @@ public class RxP2PObjectController {
             , PublishSubject<RxP2PObject> rxObj
             , SharedPreferencesProvider sharedPreferencesProvider
             , Map<String, PipeHolder> pipesMap
+            , PublishSubject<String> psWelcomeHandshakeCompletedAction
     ) {
         this.objectMapper = objectMapper;
         this.rxObj = rxObj;
         this.txObj = txObj;
         this.sharedPreferencesProvider = sharedPreferencesProvider;
         this.pipesMap = pipesMap;
+        this.psWelcomeHandshakeCompletedAction = psWelcomeHandshakeCompletedAction;
         Log.w("AVX", "created new rxP2PController for with clientId = "+clientId);
     }
 
@@ -165,6 +168,7 @@ public class RxP2PObjectController {
                 Log.e("AVX", "err on DH", e);
             }
 
+            psWelcomeHandshakeCompletedAction.onNext(remoteProfileId);
 
             new Handler(Looper.getMainLooper()).postDelayed(()-> {
                 txObj.onNext(respObj);

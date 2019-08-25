@@ -3,6 +3,8 @@ package com.hwx.rx_chat_client.di;
 import com.hwx.rx_chat_client.view.HomeActivity;
 import com.hwx.rx_chat_client.view.LoginActivity;
 import com.hwx.rx_chat_client.view.SignupActivity;
+import com.hwx.rx_chat_client.view.dialer.DialAcceptorActivity;
+import com.hwx.rx_chat_client.view.dialer.DialCallerActivity;
 import com.hwx.rx_chat_client.view.dialog.ConversationActivity;
 import com.hwx.rx_chat_client.view.dialog.CreateDialogActivity;
 import com.hwx.rx_chat_client.view.dialog.DialogProfileActivity;
@@ -42,5 +44,11 @@ public abstract class ActivityBuilder {
 
     @ContributesAndroidInjector()
     abstract SignupActivity bindSignupActivity();
+
+    @ContributesAndroidInjector()
+    abstract DialCallerActivity bindDialCallerActivity();
+
+    @ContributesAndroidInjector()
+    abstract DialAcceptorActivity bindDialAcceptorActivity();
 
 }

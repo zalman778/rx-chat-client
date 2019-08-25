@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="dialAcceptorViewModel"
+            type="com.hwx.rx_chat_client.viewModel.dialer.DialAcceptorViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:padding="10dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvVoiceCallCaptionTitle"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:text="Outgoing call with ..."
+            tools:text="Outgoing call with ..."
+            android:textStyle="bold"
+            android:gravity="center"
+            />
+
+        <TextView
+            android:id="@+id/tvVoiceCallCaption"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:text="@={dialAcceptorViewModel.lvVoiceCallCaptionTitle}"
+            tools:text="TextView"
+            android:gravity="center"
+            />
+
+        <TextView
+            android:id="@+id/tvVoiceCallStatus"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+
+            android:text="@={dialAcceptorViewModel.lvVoiceCallStatus}"
+            tools:text="00:00"
+            android:textStyle="bold"
+            android:gravity="center"
+            />
+
+
+        <Button
+            android:id="@+id/btnVoiceCallAccept"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Accept"
+            app:visibility="@{dialAcceptorViewModel.lvVisibilityBtnVoiceCallAccept}"
+            android:onClick="@{(v) -> dialAcceptorViewModel.onClickBtnVoiceCallAccept()}"
+
+            />
+
+        <Button
+            android:id="@+id/btnVoiceCallDecline"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            app:visibility="@{dialAcceptorViewModel.lvVisibilityBtnVoiceCallDecline}"
+            android:onClick="@{(v) -> dialAcceptorViewModel.onClickBtnVoiceCallDecline()}"
+            android:text="Decline" />
+
+        <Button
+            android:id="@+id/btnVoiceCallDrop"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            app:visibility="@{dialAcceptorViewModel.lvVisibilityBtnVoiceCallDrop}"
+            android:onClick="@{(v) -> dialAcceptorViewModel.onClickBtnVoiceCallDrop()}"
+            android:text="Drop" />
+
+
+    </LinearLayout>
+
+</layout>

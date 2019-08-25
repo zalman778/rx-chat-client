@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
     <application
         android:name=".RxChatApplication"
@@ -17,19 +18,17 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
+        <activity android:name=".view.dialer.DialCallerActivity"></activity>
+        <activity android:name=".view.dialer.DialAcceptorActivity" />
+
         <service
             android:name=".background.p2p.service.RxP2PService"
             android:enabled="true"
-            android:exported="true">
-
-        </service>
-
+            android:exported="true" />
         <service
             android:name=".background.service.RxService"
             android:enabled="true"
-            android:exported="true">
-
-        </service>
+            android:exported="true" />
 
         <activity android:name=".view.dialog.DialogProfileActivity" />
         <activity android:name=".view.dialog.CreateDialogActivity" />
@@ -37,8 +36,9 @@
         <activity android:name=".view.friend.AddFriendActivity" />
         <activity android:name=".view.SignupActivity" />
         <activity android:name=".view.dialog.ConversationActivity" />
-        <activity android:name=".view.dialog.P2pConversationActivity"
-                  android:theme="@style/AppThemeNoBar"/>
+        <activity
+            android:name=".view.dialog.P2pConversationActivity"
+            android:theme="@style/AppThemeNoBar" />
         <activity android:name=".view.LoginActivity" />
         <activity android:name=".view.HomeActivity">
             <intent-filter>

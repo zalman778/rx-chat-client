@@ -16,6 +16,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import com.hwx.rx_chat_client.R;
 import com.hwx.rx_chat_client.adapter.ConversationElementAdapter;
@@ -24,6 +27,7 @@ import com.hwx.rx_chat_client.background.p2p.object.type.ObjectType;
 import com.hwx.rx_chat_client.background.p2p.service.RxP2PService;
 import com.hwx.rx_chat_client.background.service.RxService;
 import com.hwx.rx_chat_client.databinding.ActivityP2pConversationBinding;
+import com.hwx.rx_chat_client.view.dialer.DialCallerActivity;
 import com.hwx.rx_chat_client.view.friend.ProfileActivity;
 import com.hwx.rx_chat_client.viewModel.conversation.P2pConversationViewModel;
 
@@ -162,11 +166,11 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
 
 
 
-        Intent rxServiceIntent = new Intent(this, RxP2PService.class);
-        bindService(rxServiceIntent, rxP2PServiceConnection, 0);
+        Intent rxP2pServiceIntent = new Intent(this, RxP2PService.class);
+        bindService(rxP2pServiceIntent, rxP2PServiceConnection, 0);
 
-        Intent rxP2pServiceIntent = new Intent(this, RxService.class);
-        bindService(rxP2pServiceIntent, rxServiceConnection, 0);
+        Intent rxServiceIntent = new Intent(this, RxService.class);
+        bindService(rxServiceIntent, rxServiceConnection, 0);
 
         initDataBinding();
 
@@ -178,6 +182,27 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
         subscribePublishers();
 
     }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_p2p_conversation_btn_voice_call, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.btnMakeVoiceCall:
+                p2pConversationViewModel.onClickBtnVoiceCall();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
 
     @Override
     protected void onStop() {
@@ -226,6 +251,18 @@ public class P2pConversationActivity extends AppCompatActivity implements HasAct
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(this::setTitle, err-> Log.e("AVX", "error on sub:", err))
         );
+
+        //слушаем запросы на исходящие звонки
+        compositeDisposable.add(
+            p2pConversationViewModel
+                    .getPsOpenVoiceCallerActivityAction()
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(profileId->{
+                        startActivity(DialCallerActivity.getIntent(this, profileId));
+                    }, err-> Log.e("AVX", "error on sub:", err))
+        );
+
 
         //событие получения сообщения от другого пользователя
         compositeDisposable.add(

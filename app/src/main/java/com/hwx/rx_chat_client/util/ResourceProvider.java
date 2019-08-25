@@ -3,6 +3,8 @@ package com.hwx.rx_chat_client.util;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 
+import java.io.File;
+
 /**
  * Represents a single point of access to the resources
  */
@@ -26,4 +28,10 @@ public class ResourceProvider {
     public Drawable getDrawable(int resId) { return mContext.getDrawable(resId); }
 
     public int getColorDrawable (int resId) {return mContext.getColor(resId); }
+
+    public File getCacheDir() {
+        return mContext.getCacheDir();
+    }
+
+
 }

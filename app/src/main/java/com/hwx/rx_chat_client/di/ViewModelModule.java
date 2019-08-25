@@ -11,6 +11,8 @@ import com.hwx.rx_chat_client.viewModel.conversation.ConversationViewModel;
 import com.hwx.rx_chat_client.viewModel.conversation.CreateDialogViewModel;
 import com.hwx.rx_chat_client.viewModel.conversation.DialogProfileViewModel;
 import com.hwx.rx_chat_client.viewModel.conversation.P2pConversationViewModel;
+import com.hwx.rx_chat_client.viewModel.dialer.DialAcceptorViewModel;
+import com.hwx.rx_chat_client.viewModel.dialer.DialCallerViewModel;
 import com.hwx.rx_chat_client.viewModel.friend.AddFriendViewModel;
 import com.hwx.rx_chat_client.viewModel.friend.ProfileViewModel;
 
@@ -65,6 +67,16 @@ public abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(SignupViewModel.class)
     abstract ViewModel bindSignupViewModel(SignupViewModel signupViewModel);
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(DialCallerViewModel.class)
+    abstract ViewModel bindDialCallerViewModel(DialCallerViewModel dialCallerViewModel);
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(DialAcceptorViewModel.class)
+    abstract ViewModel bindDialAcceptorViewModel(DialAcceptorViewModel dialAcceptorViewModel);
 
     @Binds
     abstract ViewModelProvider.Factory bindViewModelFactory(ViewModelFactory factory);

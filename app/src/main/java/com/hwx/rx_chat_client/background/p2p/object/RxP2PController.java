@@ -30,6 +30,7 @@ public class RxP2PController {
 
     private ObjectMapper objectMapper;
     private SharedPreferencesProvider sharedPreferencesProvider;
+    private PublishSubject<String> psWelcomeHandshakeCompletedAction;
 
     private Map<String, PipeHolder> pipesMap;
 
@@ -39,11 +40,13 @@ public class RxP2PController {
             , String profileId
             , Map<String, PipeHolder> pipesMap
             , SharedPreferencesProvider sharedPreferencesProvider
+            , PublishSubject<String> psWelcomeHandshakeCompletedAction
     ) {
 //        this.rxObj = rxObj;
         this.objectMapper = objectMapper;
         this.sharedPreferencesProvider = sharedPreferencesProvider;
         this.pipesMap = pipesMap;
+        this.psWelcomeHandshakeCompletedAction = psWelcomeHandshakeCompletedAction;
     }
 
     private Mono<CloseableChannel> closeable = initRSocket();
@@ -114,7 +117,7 @@ public class RxP2PController {
         PublishSubject<RxP2PObject> rxObj = PublishSubject.create();
 
         RxP2PObjectController rSocketP2PObjectController =
-                new RxP2PObjectController(objectMapper, txObj, rxObj, sharedPreferencesProvider, pipesMap);
+                new RxP2PObjectController(objectMapper, txObj, rxObj, sharedPreferencesProvider, pipesMap, psWelcomeHandshakeCompletedAction);
 
 
         return Mono.just(new AbstractRSocket() {

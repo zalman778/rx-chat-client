@@ -7,6 +7,7 @@ import com.hwx.rx_chat_client.background.p2p.object.type.ObjectType;
 
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class RxP2PObject implements Serializable {
@@ -18,6 +19,12 @@ public class RxP2PObject implements Serializable {
     private RxMessage message;
 
     private String value;
+
+    private boolean bool;
+
+    @SerializedName("bytes_payload")
+    @JsonProperty("bytes_payload")
+    private byte[] bytesPayload;
 
     @SerializedName("value_id")
     @JsonProperty("value_id")
@@ -81,21 +88,41 @@ public class RxP2PObject implements Serializable {
         this.valueAdditional = valueAdditional;
     }
 
+    public boolean isaBoolean() {
+        return bool;
+    }
+
+    public void setaBoolean(boolean aBoolean) {
+        this.bool = aBoolean;
+    }
+
+    public byte[] getBytesPayload() {
+        return bytesPayload;
+    }
+
+    public void setBytesPayload(byte[] bytesPayload) {
+        this.bytesPayload = bytesPayload;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         RxP2PObject that = (RxP2PObject) o;
-        return objectType == that.objectType &&
+        return bool == that.bool &&
+                objectType == that.objectType &&
                 Objects.equals(message, that.message) &&
                 Objects.equals(value, that.value) &&
+                Arrays.equals(bytesPayload, that.bytesPayload) &&
                 Objects.equals(valueId, that.valueId) &&
                 Objects.equals(valueAdditional, that.valueAdditional);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(objectType, message, value, valueId, valueAdditional);
+        int result = Objects.hash(objectType, message, value, bool, valueId, valueAdditional);
+        result = 31 * result + Arrays.hashCode(bytesPayload);
+        return result;
     }
 
     @Override
@@ -104,6 +131,7 @@ public class RxP2PObject implements Serializable {
                 "objectType=" + objectType +
                 ", message=" + message +
                 ", value='" + value + '\'' +
+                ", bool=" + bool +
                 ", valueId='" + valueId + '\'' +
                 ", valueAdditional='" + valueAdditional + '\'' +
                 '}';

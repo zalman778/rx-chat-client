@@ -119,6 +119,9 @@ dependencies {
     //room debug
     debugImplementation 'com.amitshekhar.android:debug-db:1.0.6'
 
+    //audio
+    implementation 'com.nabto.android:nabto-api:1.0.1'
+
 
     testImplementation 'junit:junit:4.12'
 

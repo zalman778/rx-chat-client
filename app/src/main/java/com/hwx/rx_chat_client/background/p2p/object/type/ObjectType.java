@@ -19,4 +19,10 @@ public enum ObjectType {
     //message edit
     ,ACTION_EDIT_MESSAGE_REQUEST
     ,ACTION_EDIT_MESSAGE_RESPONSE
+
+    //voice calls:
+    , ACTION_VOICE_CALL_START_REQUEST
+    , ACTION_VOICE_CALL_START_RESPONSE
+    , VOICE_CALL_PAYLOAD
+
 }
